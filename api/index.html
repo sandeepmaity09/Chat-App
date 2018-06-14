@@ -1,0 +1,204 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>INR APP : Chat</title>
+</head>
+
+<body>
+    <ul id="messages"></ul>
+    <form id="sendmessage" action="">
+        <input id="m" autocomplete="off" />
+        <button>Send</button>
+    </form>
+
+    <form id="getclients" action="">
+        <button>Get Clients</button>
+    </form>
+
+    <form id="getrooms" action="">
+        <button>Get Rooms</button>
+    </form>
+
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+
+    <script>
+        $(function () {
+            var socket = io('http://localhost:3000', {
+                transports: ['websocket']
+            });
+
+            $('#getclients').submit(function () {
+                socket.emit('show clients');
+                return false;
+            })
+
+            $("#getrooms").submit(function () {
+                socket.emit('show rooms');
+                return false;
+            })
+
+            $('#sendmessage').submit(function () {
+                var message = {};
+                var d = new Date();
+                var day = d.getUTCDate();
+                var month = d.getUTCMonth() + 1;
+                var year = d.getUTCFullYear();
+                if (day < 10) {
+                    day = "0" + day;
+                }
+                if (month < 10) {
+                    month = "0" + month;
+                }
+                var curr_hour = d.getUTCHours();
+                var curr_min = d.getUTCMinutes();
+                var curr_sec = d.getUTCSeconds();
+                var date = year + "-" + month + "-" + day + " " + curr_hour + ":" + curr_min + ":" + curr_sec;
+
+                // /*
+                message.user_id = 64;
+                message.box_id = "50bc2a83e4b0efcb4c2a6cce";
+                message.message = "" + $('#m').val();
+                // message.message = "\\ud83d\\ude12";
+                // message.message = "";
+                message.status = "1";
+                message.created_at = date;
+                message.type = "";
+                // message.message_id = 3451;
+                message.is_like = 0;
+                message.isliketext = "";
+                message.parent_id = 0;
+                // message.chat_type = 1;
+                // */
+
+
+
+
+                /*
+                message.user_id = 120;
+                message.box_id = "4bbf1292ba9776b0697efec8";
+                message.message = "" + $('#m').val();
+                message.status = "1";
+                message.created_at = date;
+                message.type = "";
+                message.message_id = "";
+                message.isliketext = "";
+                message.parent_id = 1;
+                */
+
+                /*
+                message.user_id = "64";
+                message.box_id = "4bbf1292ba9776b0697efec8";
+                message.message = "";
+                message.created_at = date;
+                message.status = "1";
+                message.type = "";
+                message.message_id = "1324";
+                message.isliketext = "";
+                message.parent_id = "0";
+                */
+
+                /*
+                message.user_id = 64;
+                message.box_id = "4bbf1292ba9776b0697efec8";
+                message.message = "Hello"
+                message.is_flagged = 0;
+                message.created_at = date;
+                message.status = 1;
+                message.type = "";
+                message.message_id = 2;
+                message.isliketext = "Yes";
+                message.is_like = 0;
+                message.parent_id = 0;
+                */
+
+
+                // ["message_id": "960", 
+                // "isliketext": "Yes", 
+                // "status": "1", 
+                // "parent_id": "0", 
+                // "box_id": "4bbf1292ba9776b0697efec8", 
+                // "created_at": "2018-05-01 05:51:46", 
+                // "user_id": "24", 
+                // "message": "Hi", 
+                // "is_flagged": "1", 
+                // "is_like": 1, 
+                // "type": ""]
+
+                // console.log('i am sending');
+                socket.emit('send message', JSON.stringify(message))
+
+                // socket.emit('join user', JSON.stringify({ user_id: 64, box_id: "4bbf1292ba9776b0697efec8" }))
+
+                $('#m').val('');
+                return false;
+            });
+
+
+
+
+            socket.on('show clients', function (data) {
+                console.log('this is data', data);
+            });
+
+            socket.on('show rooms', function (data) {
+                console.log('these are rooms', data);
+            })
+
+
+            socket.on('send message', function (msg) {
+                $('#messages').append($('<li>').text(msg));
+                window.scrollTo(0, document.body.scrollHeight);
+            });
+
+
+            socket.on("send", function (msgdata) {
+                console.log('this is send emit', msgdata);
+            })
+            socket.on("msg", function (data) {
+                console.log('this is msg emit', data);
+            })
+            socket.on("sendandroid", function (msgdata) {
+                console.log('this is send android emit', msgdata);
+            })
+            socket.on("msgandroid", function (data) {
+                console.log('this is msg android emit', data);
+            })
+
+            socket.on('send message', function (msgdata) {
+                console.log('this is from send message', msgdata);
+            })
+
+            socket.on('join', function (data) {
+                console.log('this is data', data);
+            })
+
+            socket.on('connect', function (data) {
+                console.log('socket connected', data);
+            });
+
+            socket.on('connect_error', function (error) {
+                console.log('this is connect_error', error);
+            })
+
+            socket.on('connect_timeout', function (error) {
+                console.log('this is connect_timeout', error);
+            });
+
+            socket.on('error', function (error) {
+                console.log('this is error', error);
+            });
+
+            socket.on('ping', (data) => {
+                console.log('this is ping', data);
+            })
+
+            socket.on('pong', (data) => {
+                console.log('this is pong', data);
+            })
+        });
+    </script>
+</body>
+
+</html>
