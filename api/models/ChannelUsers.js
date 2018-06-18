@@ -1,18 +1,20 @@
 const Sequlize = require('sequelize');
 const sequlize = require('../../config/database');
 
-const tableName = 'chat_groups';
+const tableName = 'chat_channel_users';
 
-const Group = sequlize.define('Group', {
+const ChannelUsers = sequlize.define('ChannelUsers', {
     id: {
         type: Sequlize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
         unique: true
     },
-    place_id: {
-        type: Sequlize.STRING,
-        unique: true,
+    channel_id: {
+        type: Sequlize.INTEGER,
+    },
+    user_id: {
+        type: Sequlize.INTEGER,
     },
     created_at: {
         type: Sequlize.DATE,
@@ -25,4 +27,4 @@ const Group = sequlize.define('Group', {
     }
 )
 
-module.exports = Group;
+module.exports = ChannelUsers;

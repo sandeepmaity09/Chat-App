@@ -20,6 +20,10 @@
         <button>Get Rooms</button>
     </form>
 
+    <form id="joinchannel" action="">
+        <button>Join Room</button>
+    </form>
+
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 
@@ -28,6 +32,14 @@
             var socket = io('http://localhost:3000', {
                 transports: ['websocket']
             });
+
+            $("#joinchannel").submit(function () {
+                socket.emit("join channel", JSON.stringify({
+                    channel_name: "gEzpyY0qHNAPTfplUxGqfA==:zV0vBY5bdsrIiTjVkSqALQ==",
+                    user_id: "K6aSL1a2aUMK+GA8um2kWg==:OSTsc9XYD8hBqc+7y0DLRg=="
+                }));
+                return false;
+            })
 
             $('#getclients').submit(function () {
                 socket.emit('show clients');
@@ -134,8 +146,6 @@
                 $('#m').val('');
                 return false;
             });
-
-
 
 
             socket.on('show clients', function (data) {
