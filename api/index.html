@@ -24,6 +24,10 @@
         <button>Join Room</button>
     </form>
 
+    <form id="leavechannel" action="">
+        <button>Leave Room</button>
+    </form>
+
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 
@@ -34,12 +38,23 @@
             });
 
             $("#joinchannel").submit(function () {
-                socket.emit("join channel", JSON.stringify({
+                socket.emit("switch channel", JSON.stringify({
                     channel_name: "gEzpyY0qHNAPTfplUxGqfA==:zV0vBY5bdsrIiTjVkSqALQ==",
                     user_id: "K6aSL1a2aUMK+GA8um2kWg==:OSTsc9XYD8hBqc+7y0DLRg=="
                 }));
                 return false;
             })
+
+
+            $("#leavechannel").submit(function () {
+                socket.emit("leave channel", JSON.stringify({
+                    channel_name: "gEzpyY0qHNAPTfplUxGqfA==:zV0vBY5bdsrIiTjVkSqALQ==",
+                    user_id: "K6aSL1a2aUMK+GA8um2kWg==:OSTsc9XYD8hBqc+7y0DLRg=="
+                }));
+                return false;
+            })
+
+
 
             $('#getclients').submit(function () {
                 socket.emit('show clients');
@@ -68,19 +83,41 @@
                 var curr_sec = d.getUTCSeconds();
                 var date = year + "-" + month + "-" + day + " " + curr_hour + ":" + curr_min + ":" + curr_sec;
 
+                console.log(date);
+
+                // Group Chat :- Text
                 // /*
+
+
+                /*
+                message.chat_type = 0;
                 message.user_id = 64;
-                message.box_id = "50bc2a83e4b0efcb4c2a6cce";
-                message.message = "" + $('#m').val();
+                message.channel_name = 18;
+                message.parent_id = 0;
+                message.created_at = "2018-06-19 6:4:31";
+                message.type = 0;
+                message.message = "Hello World";
+                */
+
+                message.chat_type = "KkHSASPgySB0xs1onT0MXw==:imOZU4UPt9Ga3rjqLiZQVw==";
+                message.user_id = "6Zi60LtgI0WwtmREwZM/+g==:hMq45SCXfCJ1QqbQIFkisg==";
+                message.channel_name = "EBCBMwvw4V07KCNZiPcFTg==:a73h+wOB/3KBCj2GGZWNpA==";
+                message.parent_id = "876GFUwvtUnGOY/D1dYYsg==:PGbkkihwJZKn+iloGUC0Gw==";
+                message.created_at = "nKbSx8sRBJ89rMrJh0vyoVQyC8m5E9fQ2JnlMt+00eM=:QElmaiXp/RsCSBH88Ak9cg==";
+                message.message_type = "k7UnTag9oQ/QKXVv7Yv1Fg==:dViOLMJxwj4ldHV0tmWBNQ==";
+                message.message = "PB5CrSrpbaot4gI/Gr6kFg==:AIDo9sTOWpM0GptiASUnsQ==";
+
+
+                // message.message = "" + $('#m').val();
                 // message.message = "\\ud83d\\ude12";
                 // message.message = "";
-                message.status = "1";
-                message.created_at = date;
-                message.type = "";
+                // message.status = "1";
+                // message.created_at = date;
+                // message.type = "";
                 // message.message_id = 3451;
-                message.is_like = 0;
-                message.isliketext = "";
-                message.parent_id = 0;
+                // message.is_like = 0;
+                // message.isliketext = "";
+                // message.parent_id = 0;
                 // message.chat_type = 1;
                 // */
 
@@ -140,7 +177,6 @@
 
                 // console.log('i am sending');
                 socket.emit('send message', JSON.stringify(message))
-
                 // socket.emit('join user', JSON.stringify({ user_id: 64, box_id: "4bbf1292ba9776b0697efec8" }))
 
                 $('#m').val('');

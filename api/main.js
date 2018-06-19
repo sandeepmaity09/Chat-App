@@ -127,34 +127,6 @@ io.on('connection', async function (socket) {
     // "join channel" :- when user join a channel for first time
     //////////////////////////////////////////////////////////////
 
-    // socket.on('join group', async function (data) {
-    //     console.log('join user called by the socket user', socket.id);
-    //     console.log('this is data received at join user', data);
-    //     let userData;
-    //     try {
-    //         userData = JSON.parse(data);
-    //         console.log(userData);
-    //     } catch (err) {
-    //         console.log('app crashed at join user', data);
-    //         process.exit(1);
-    //     }
-    //     let userId = userData.user_id;
-    //     let groupId = userData.group_id;
-    //     let userObject = {
-    //         user_id: user_id,
-    //         group_id: group_id,
-    //         type: 'join'
-    //     }
-    //     setTimeout(function () {
-    //         socket.broadcast.emit('join', {
-    //             user: userObject
-    //         })
-    //     })
-    //     io.emit('joinandroid', {
-    //         user: userObject
-    //     })
-    // })
-
     socket.on("join channel", async function (data) {
         console.log('join user called by the socket user', socket.id);
         console.log('this is data received at join channel', data);
@@ -207,35 +179,89 @@ io.on('connection', async function (socket) {
     })
 
     //////////////////////////////////////////////////////////
-    // "switch group" :- when user changes a group (channel)
+    // "switch channel" :- when user changes a channel
     //////////////////////////////////////////////////////////
 
-    socket.on('switch group', function (groupdata) {
-        console.log('switch group called by the socket user', socket.id);
-        let newgroup;
+    socket.on("switch channel", async function (channeldata) {
+        console.log('switch channel called by socket user', socket.id);
+        console.log('this is data received at switch channel', channeldata);
+
+        let channelInfo;
         try {
-            newgroup = JSON.parse(groupdata);
+            channelInfo = JSON.parse(channeldata);
         } catch (err) {
-            console.log('app crashed at switch group', err);
+            console.log("Parsing Error", err);
         }
+        let channelName = channelInfo.channel_name;
+        let userId = channelInfo.user_id;
+        try {
+            channelName = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, channelName);
+            userId = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, userId);
+        } catch (err) {
+            console.log("Decryption Error", err);
+        }
+
+
+        let channelContent;
+        try {
+            let channelContentList = await channelsService.findOrCreateChannel({ channel_name: channelName });
+            console.log('this is channel content', channelContentList);
+            channelContent = channelContentList[0];
+        } catch (err) {
+            console.log('this is error from channelContent', err);
+        }
+
+        _.forEach(io.sockets.adapter.sids[socket.id], (item) => {
+            if (item == socket.id || item == channelContent.channel_id) {
+
+            } else {
+                socket.leave(item);
+            }
+        })
+        socket.join(channelContent.channel_id);
     })
 
 
     /////////////////////////////////////////////////////////////
-    // "leave group" :- when user leaves a group ( before switch)
+    // "leave channel" :- when user leaves a channel 
     /////////////////////////////////////////////////////////////
 
-    socket.on('leave group', async function (leavepacket) {
-        console.log("leave group called by the socket user ", socket.id);
-        let room;
+    socket.on("leave channel", async function (channeldata) {
+        console.log('leave channel called by socket user', socket.id);
+        console.log('this is data received at leave channel', channeldata);
+
+        let channelInfo;
         try {
-            room = JSON.parse(leavepacket);
-            console.log("Now I m leaving group", leavepacket);
+            channelInfo = JSON.parse(channeldata);
         } catch (err) {
-            console.log("app crashed at leave room", err);
-            process.exit(1);
+            console.log("Parsing Error", err);
         }
-        socket.leave(room.room_id);
+        let channelName = channelInfo.channel_name;
+        let userId = channelInfo.user_id;
+        try {
+            channelName = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, channelName);
+            userId = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, userId);
+        } catch (err) {
+            console.log("Decryption Error", err);
+        }
+
+        let channelContent;
+        try {
+            let channelContentList = await channelsService.findOrCreateChannel({ channel_name: channelName });
+            console.log('this is channel content', channelContentList);
+            channelContent = channelContentList[0];
+        } catch (err) {
+            console.log('this is error from channelContent', err);
+        }
+
+        _.forEach(io.sockets.adapter.sids[socket.id], (item) => {
+            if (item == socket.id || item == channelContent.channel_id) {
+
+            } else {
+                socket.leave(item);
+            }
+        })
+        socket.leave(channelContent.channel_id);
     })
 
 
@@ -244,20 +270,163 @@ io.on('connection', async function (socket) {
     //////////////////////////////////////////////////////////////
 
     socket.on('send message', async function (data) {
-        console.log("send message called by socket user", socket.id);
-        console.log("socket user is connected to these rooms", socket.rooms);
-        console.log("this is received payload from client", data);
-        let payload = JSON.parse(data);
+        console.log("send message is called by socket id", socket.id);
+        // console.log("send message called by socket user", socket.id);
+        // console.log("socket user is connected to these rooms", socket.rooms);
+        // console.log("this is received payload from client", data);
 
-        const channelId = payload.channel_id;
+        let messageInfo;
+        try {
+            messageInfo = JSON.parse(data);
+        } catch (err) {
+            console.log("Parsing Error", err);
+        }
 
-        let chatType = payload.chat_type;
+        // console.log('this is messageInfo before parsing', messageInfo);
 
+        try {
+            for (let property in messageInfo) {
+                messageInfo[property] = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, messageInfo[property]);
+            }
+        } catch (err) {
+            console.log("Decryption Error", err);
+        }
+
+        // console.log('this is messageInfo after parsing', messageInfo);
+
+
+        let chatType = parseInt(messageInfo.chat_type);
+        let messageType = parseInt(messageInfo.message_type);
+        // console.log(messageType);
+
+        let channelInfo;
+        try {
+            channelInfo = await channelsService.findChannel({ channel_name: messageInfo.channel_name })
+            // console.log('this is channelInfo', channelInfo);
+        } catch (err) {
+            console.log("Channel Fetching Error", err);
+        }
 
         if (chatType) {
             // ONE To ONE Chat
+            console.log('ONE TO ONE CHAT');
+            if (messageType === 0) {
+                console.log("TEXT MESSAGE");
+                let isReply = parseInt(messageInfo.parent_id);
+                if (isReply) {
+                    console.log("This is Reply");
+                } else {
+                    console.log("This is Just Text Message");
+                    let insertedMessageId;
+                    let insertedMessageInfo;
+                    try {
+                        messageInfo.is_flagged = 0;
+                        messageInfo.is_deleted = 0;
+                        let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_flagged,is_deleted,created_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.is_deleted)},"${messageInfo.created_at}")`, { type: sequelize.QueryTypes.INSERT })
+                        insertedMessageId = insertedMessageContent;
+                    } catch (err) {
+                        console.log("Insertation Error", err);
+                    }
+                    try {
+                        let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
+                        if (insertedMessageContent.length) {
+                            insertedMessageInfo = insertedMessageContent[0];
+                        }
+                    } catch (err) {
+                        console.log("Selection Error", err);
+                    }
+                    delete insertedMessageInfo.channel_id;
+                    insertedMessageInfo.channel_name = channelInfo.channel_name;
+
+                    try {
+                        _.forEach(insertedMessageInfo, (item, key) => {
+                            if (item !== null) {
+                                insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                            } else {
+                                delete insertedMessageInfo[key];
+                            }
+                        })
+                        console.log("this is insertedMessageInfo", insertedMessageInfo);
+                    } catch (err) {
+                        console.log("Encryption Error", err);
+                    }
+
+                    setTimeout(function () {
+                        io.in(channelInfo.channel_id).emit('send', {
+                            message: insertedMessageInfo
+                        })
+                    })
+                }
+            } else if (messageType === 1) {
+                console.log("Image Message");
+            } else if (messageType === 2) {
+                console.log("Audio Message");
+            } else if (messageType === 3) {
+                console.log("Video Message");
+            } else if (messageType === 4) {
+                console.log("Docs Message");
+            }
         } else {
             // Group Chat
+            console.log('GROUP CHAT');
+            if (messageType === 0) {
+                console.log("TEXT MESSAGE");
+                let isReply = parseInt(messageInfo.parent_id);
+                if (isReply) {
+                    console.log("This is Reply");
+                } else {
+                    console.log("This is Just Text Message");
+                    let insertedMessageId;
+                    let insertedMessageInfo;
+                    try {
+                        messageInfo.is_flagged = 0;
+                        messageInfo.is_deleted = 0;
+                        let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_flagged,is_deleted,created_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.is_deleted)},"${messageInfo.created_at}")`, { type: sequelize.QueryTypes.INSERT })
+                        // console.log('this is id of insertedMessageContent', insertedMessageContent);
+                        insertedMessageId = insertedMessageContent;
+                    } catch (err) {
+                        console.log("Insertation Error", err);
+                    }
+                    try {
+                        let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
+                        if (insertedMessageContent.length) {
+                            insertedMessageInfo = insertedMessageContent[0];
+                            // console.log('this is insertedMessageInfo', insertedMessageInfo);
+                        }
+                    } catch (err) {
+                        console.log("Selection Error", err);
+                    }
+                    delete insertedMessageInfo.channel_id;
+                    insertedMessageInfo.channel_name = channelInfo.channel_name;
+
+                    try {
+                        _.forEach(insertedMessageInfo, (item, key) => {
+                            if (item !== null) {
+                                insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                            } else {
+                                delete insertedMessageInfo[key];
+                            }
+                        })
+                        console.log("this is insertedMessageInfo", insertedMessageInfo);
+                    } catch (err) {
+                        console.log("Encryption Error", err);
+                    }
+                    setTimeout(function () {
+                        io.in(channelInfo.channel_id).emit('send', {
+                            message: insertedMessageInfo
+                        })
+                    })
+
+                }
+            } else if (messageType === 1) {
+                console.log("Image Message");
+            } else if (messageType === 2) {
+                console.log("Audio Message");
+            } else if (messageType === 3) {
+                console.log("Video Message");
+            } else if (messageType === 4) {
+                console.log("Docs Message");
+            }
         }
 
 
