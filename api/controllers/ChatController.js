@@ -201,10 +201,26 @@ const ChatController = () => {
     }
 
 
+    async function chatHistory(req, res) {
+        console.log("Chat History");
+        console.log('this is req userid', req.get('userid'));
+        let userId = Encrypter.aesDecryption(process.env.ENCRYPT_KEY, req.get('userid'));
+        console.log('this is the user', userId);
+
+        let channelName = req.body.channel_name;
+
+        if (!channelName) {
+            return res.json(new responseObj('channel_name is not provided, BAD REQUEST', 400, false));
+        }
+
+    }
+
+
     return {
         createChannel,
         joinChannel,
         leaveChannel,
+        chatHistory,
         aesEncryptor,
         aesDecryptor
     }
