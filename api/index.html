@@ -6,10 +6,38 @@
 </head>
 
 <body>
-    <ul id="messages"></ul>
+
+    <h1>Welcome to the INR Chat Application</h1>
+
+    <div>
+        <h3> Your Socket Id:-</h3>
+        <span id="socketid"></span>
+    </div>
+    <div>
+        <h4> Your Channels:-</h4>
+        <span id="channelid"></span>
+    </div>
+    <div>
+        <h2>Message Are Here</h2>
+        <ul id="messages"></ul>
+    </div>
+
+    <form id="joinchannel" action="">
+        <input id="jc" placeholder="Enter Channel Name" autocomplete="off" />
+        <input id="jcu" placeholder="Enter User Id" autocomplete="off" />
+        <button>Join Channel (Only If first Time User In This Channel)</button>
+    </form>
+
+    <form id="switchchannel" action="">
+        <input id="sc" placeholder="Enter Channel Name" autocomplete="off" />
+        <input id="scu" placeholder="Enter User Id" autocomplete="off" />
+        <button>Switch Channel(Whenever You're Switching Channel)</button>
+    </form>
+
     <form id="sendmessage" action="">
-        <input id="m" autocomplete="off" />
-        <button>Send</button>
+        <input id="replymsgid" placeholder="Message Id (If Reply) " autocomplete="off" />
+        <input id="message" placeholder="Enter Your Message Here" autocomplete="off" />
+        <button>Send Message</button>
     </form>
 
     <form id="getclients" action="">
@@ -20,29 +48,76 @@
         <button>Get Rooms</button>
     </form>
 
-    <form id="joinchannel" action="">
-        <button>Join Room</button>
-    </form>
-
     <form id="leavechannel" action="">
         <button>Leave Room</button>
     </form>
 
+    <!-- <script src="/public/bundle.js"></script> -->
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 
     <script>
+        // var Encryptor = require('bundle.js');
+        // console.log(aesEncryption);
         $(function () {
-            var socket = io('http://h2777857.stratoserver.net:3000/', {
+            // h2777857.stratoserver.net:3000
+            var socket = io('http://localhost:3000/', {
                 transports: ['websocket']
             });
+            // console.log("Encryptor", aesEncryption);
+            // console.log("Decryptor", aesDecryption);
+            $("#joinchannel").submit(async function (e) {
+                e.preventDefault();
+                let formData1 = new FormData();
+                let formData2 = new FormData();
 
-            $("#joinchannel").submit(function () {
-                socket.emit("switch channel", JSON.stringify({
-                    channel_name: "43VCt+fzlg1JalHhbtfl0w==:qtJMbuxQ1mMnTLNcODTksA==",
-                    user_id: "acmekijdPsD7mguQoeaOug==:JNz/iR7V/Cn4Nd9+O5Yy1Q=="
-                }));
-                return false;
+                let channel = {};
+
+                channel.channel_name = "" + $('#jc').val();
+                channel.user_id = "" + $('#jcu').val();
+
+                formData1.append('name', channel.channel_name);
+                formData2.append('name', channel.user_id);
+
+                channel.channel_name = await fetch("http://localhost:3000/inrchat/chatservice/encrypt", {
+                    method: 'POST',
+                    body: formData1
+                }).then(res => res.json())
+                channel.user_id = await fetch("http://localhost:3000/inrchat/chatservice/encrypt", {
+                    method: 'POST',
+                    body: formData2
+                }).then(res => res.json())
+                // console.log('this is channel name', channel);
+                // .then(res => { channel.channel_name = res.toString(); });
+                socket.emit("join channel", JSON.stringify(channel));
+                return;
+            })
+
+            var channel;
+
+            $("#switchchannel").submit(async function (e) {
+                e.preventDefault();
+                let formData1 = new FormData();
+                let formData2 = new FormData();
+                channel = {};
+                channel.channel_name = "" + $('#sc').val();
+                channel.user_id = "" + $('#scu').val();
+
+                formData1.append('name', channel.channel_name);
+                formData2.append('name', channel.user_id);
+
+                channel.channel_name = await fetch("http://localhost:3000/inrchat/chatservice/encrypt", {
+                    method: 'POST',
+                    body: formData1
+                }).then(res => res.json())
+                channel.user_id = await fetch("http://localhost:3000/inrchat/chatservice/encrypt", {
+                    method: 'POST',
+                    body: formData2
+                }).then(res => res.json())
+                // console.log('this is channel name', channel);
+                // .then(res => { channel.channel_name = res.toString(); });
+                socket.emit("switch channel", JSON.stringify(channel));
+                return;
             })
 
 
@@ -66,7 +141,10 @@
                 return false;
             })
 
-            $('#sendmessage').submit(function () {
+            $('#sendmessage').submit(async function (e) {
+                e.preventDefault();
+
+                // Group Chat :- Text
                 var message = {};
                 var d = new Date();
                 var day = d.getUTCDate();
@@ -83,42 +161,46 @@
                 var curr_sec = d.getUTCSeconds();
                 var date = year + "-" + month + "-" + day + " " + curr_hour + ":" + curr_min + ":" + curr_sec;
 
-                console.log(date);
-
-                // Group Chat :- Text
                 // /*
-
-
-                /*
-                message.chat_type = 0;
-                message.user_id = 64;
-                message.channel_name = 18;
-                message.parent_id = 0;
-                message.created_at = "2018-06-19 6:4:31";
-                message.type = 0;
-                message.message = "Hello World";
-                */
+                message.message = "" + $("#message").val();
+                message.parent_id = "" + $("#replymsgid").val();
 
                 message.chat_type = "KkHSASPgySB0xs1onT0MXw==:imOZU4UPt9Ga3rjqLiZQVw==";
-                message.user_id = "acmekijdPsD7mguQoeaOug==:JNz/iR7V/Cn4Nd9+O5Yy1Q==";
-                message.channel_name = "43VCt+fzlg1JalHhbtfl0w==:qtJMbuxQ1mMnTLNcODTksA==";
-                message.parent_id = "876GFUwvtUnGOY/D1dYYsg==:PGbkkihwJZKn+iloGUC0Gw==";
-                message.created_at = "nKbSx8sRBJ89rMrJh0vyoVQyC8m5E9fQ2JnlMt+00eM=:QElmaiXp/RsCSBH88Ak9cg==";
+                message.user_id = channel.user_id;
+                message.channel_name = channel.channel_name;
+
+                // message.parent_id = "876GFUwvtUnGOY/D1dYYsg==:PGbkkihwJZKn+iloGUC0Gw==";
                 message.message_type = "k7UnTag9oQ/QKXVv7Yv1Fg==:dViOLMJxwj4ldHV0tmWBNQ==";
-                message.message = "PB5CrSrpbaot4gI/Gr6kFg==:AIDo9sTOWpM0GptiASUnsQ==";
+
+                let formData1 = new FormData();
+                formData1.append('name', date.toString());
+                message.created_at = await fetch("http://localhost:3000/inrchat/chatservice/encrypt", {
+                    method: 'POST',
+                    body: formData1
+                }).then(res => res.json())
+
+                // console.log('this is message', message.message);
+                let formData2 = new FormData();
+                formData2.append('name', message.message);
+                message.message = await fetch("http://localhost:3000/inrchat/chatservice/encrypt", {
+                    method: 'POST',
+                    body: formData2
+                }).then(res => res.json())
 
 
-                // message.message = "" + $('#m').val();
-                // message.message = "\\ud83d\\ude12";
-                // message.message = "";
-                // message.status = "1";
-                // message.created_at = date;
-                // message.type = "";
-                // message.message_id = 3451;
-                // message.is_like = 0;
-                // message.isliketext = "";
-                // message.parent_id = 0;
-                // message.chat_type = 1;
+                if (parseInt(message.parent_id)) {
+                    let formData3 = new FormData();
+                    formData3.append('name', message.parent_id);
+                    message.parent_id = await fetch("http://localhost:3000/inrchat/chatservice/encrypt", {
+                        method: 'POST',
+                        body: formData3
+                    }).then(res => res.json())
+                } else {
+                    message.parent_id = "876GFUwvtUnGOY/D1dYYsg==:PGbkkihwJZKn+iloGUC0Gw==";
+                }
+
+                console.log('this is parent id', message.parent_id);
+
                 // */
 
 
@@ -194,14 +276,28 @@
 
 
             socket.on('send message', function (msg) {
-                $('#messages').append($('<li>').text(msg));
-                window.scrollTo(0, document.body.scrollHeight);
+                // console.log('')
+                // $('#messages').append($('<li>').text(msg));
+                // window.scrollTo(0, document.body.scrollHeight);
             });
 
 
-            socket.on("send", function (msgdata) {
+            socket.on("send", async function (msgdata) {
                 console.log('this is send emit', msgdata);
+                // msgdata = JSON.parse(msgdata);
+                console.log('this is message', msgdata.message.message);
+                // let message = 
+                let formData1 = new FormData();
+                formData1.append('name', msgdata.message.message);
+                let message1 = await fetch("http://localhost:3000/inrchat/chatservice/decrypt", {
+                    method: 'POST',
+                    body: formData1
+                }).then(res => res.json())
+                console.log('this is message', message1);
+                $("#messages").append($('<li>').text(message1));
+                window.scrollTo(0, document.body.scrollHeight);
             })
+
             socket.on("msg", function (data) {
                 console.log('this is msg emit', data);
             })
@@ -212,9 +308,9 @@
                 console.log('this is msg android emit', data);
             })
 
-            socket.on('send message', function (msgdata) {
-                console.log('this is from send message', msgdata);
-            })
+            // socket.on('send message', function (msgdata) {
+            //     console.log('this is from send message', msgdata);
+            // })
 
             socket.on('join', function (data) {
                 console.log('this is data', data);
@@ -242,6 +338,13 @@
 
             socket.on('pong', (data) => {
                 console.log('this is pong', data);
+            })
+
+            socket.on('message', (data) => {
+                console.log(data);
+                data = JSON.parse(data);
+                $('#socketid').text(data.socketID);
+                $('#channelid').text(Object.keys(data.channelID))
             })
         });
     </script>

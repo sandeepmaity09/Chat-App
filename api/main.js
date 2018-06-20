@@ -74,6 +74,11 @@ app.use(bodyParser.json());
 app.use(morgan('dev'));
 
 /**
+ * Static Resource Sharing
+ */
+// app.use('/public', express.static(path.join(__dirname + '/public')));
+
+/**
  * Express Routes Application
  */
 app.use('/inrchat/chatservice', routes);
@@ -122,7 +127,16 @@ app.get('/', function (req, res) {
 
 io.on('connection', async function (socket) {
     console.log('A new user connected', socket.id);
-
+    // io.emit('connect', JSON.stringify({
+    //     socketID: socket.id
+    // }))
+    // socket.emit('connection', JSON.stringify({
+    //     socketID: socket.id
+    // }))
+    socket.send(JSON.stringify({
+        socketID: socket.id,
+        channelID: io.sockets.adapter.sids[socket.id]
+    }));
     //////////////////////////////////////////////////////////////
     // "join channel" :- when user join a channel for first time
     //////////////////////////////////////////////////////////////
@@ -218,7 +232,12 @@ io.on('connection', async function (socket) {
                 socket.leave(item);
             }
         })
+        console.log('Joininng channel', channelContent.channel_id);
         socket.join(channelContent.channel_id);
+        socket.send(JSON.stringify({
+            socketID: socket.id,
+            channelID: io.sockets.adapter.sids[socket.id]
+        }));
     })
 
 
@@ -315,6 +334,50 @@ io.on('connection', async function (socket) {
                 let isReply = parseInt(messageInfo.parent_id);
                 if (isReply) {
                     console.log("This is Reply");
+                    let insertedMessageId;
+                    let insertedMessageInfo;
+
+                    try {
+                        messageInfo.is_flagged = 0;
+                        messageInfo.is_deleted = 0;
+                        let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_flagged,is_deleted,created_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.is_deleted)},"${messageInfo.created_at}")`, { type: sequelize.QueryTypes.INSERT })
+                        insertedMessageId = insertedMessageContent;
+                    } catch (err) {
+                        console.log("Insertation Error", err);
+                    }
+
+                    try {
+                        let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
+                        if (insertedMessageContent.length) {
+                            insertedMessageInfo = insertedMessageContent[0];
+                        }
+                    } catch (err) {
+                        console.log("Selection Error", err);
+                    }
+                    delete insertedMessageInfo.channel_id;
+                    insertedMessageInfo.channel_name = channelInfo.channel_name;
+
+                    try {
+                        _.forEach(insertedMessageInfo, (item, key) => {
+                            if (item !== null) {
+                                insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                            } else {
+                                delete insertedMessageInfo[key];
+                            }
+                        })
+                        console.log("this is insertedMessageInfo", insertedMessageInfo);
+                    } catch (err) {
+                        console.log("Encryption Error", err);
+                    }
+
+                    console.log('Message send to ', channelInfo.channel_id);
+
+                    setTimeout(function () {
+                        io.in(channelInfo.channel_id).emit('send', {
+                            message: insertedMessageInfo
+                        })
+                    })
+
                 } else {
                     console.log("This is Just Text Message");
                     let insertedMessageId;
@@ -351,6 +414,8 @@ io.on('connection', async function (socket) {
                         console.log("Encryption Error", err);
                     }
 
+                    console.log('Message send to ', channelInfo.channel_id);
+
                     setTimeout(function () {
                         io.in(channelInfo.channel_id).emit('send', {
                             message: insertedMessageInfo
@@ -374,6 +439,49 @@ io.on('connection', async function (socket) {
                 let isReply = parseInt(messageInfo.parent_id);
                 if (isReply) {
                     console.log("This is Reply");
+                    let insertedMessageId;
+                    let insertedMessageInfo;
+
+                    try {
+                        messageInfo.is_flagged = 0;
+                        messageInfo.is_deleted = 0;
+                        let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_flagged,is_deleted,created_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.is_deleted)},"${messageInfo.created_at}")`, { type: sequelize.QueryTypes.INSERT })
+                        insertedMessageId = insertedMessageContent;
+                    } catch (err) {
+                        console.log("Insertation Error", err);
+                    }
+
+                    try {
+                        let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
+                        if (insertedMessageContent.length) {
+                            insertedMessageInfo = insertedMessageContent[0];
+                        }
+                    } catch (err) {
+                        console.log("Selection Error", err);
+                    }
+                    delete insertedMessageInfo.channel_id;
+                    insertedMessageInfo.channel_name = channelInfo.channel_name;
+
+                    try {
+                        _.forEach(insertedMessageInfo, (item, key) => {
+                            if (item !== null) {
+                                insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                            } else {
+                                delete insertedMessageInfo[key];
+                            }
+                        })
+                        console.log("this is insertedMessageInfo", insertedMessageInfo);
+                    } catch (err) {
+                        console.log("Encryption Error", err);
+                    }
+
+                    console.log('Message send to ', channelInfo.channel_id);
+
+                    setTimeout(function () {
+                        io.in(channelInfo.channel_id).emit('send', {
+                            message: insertedMessageInfo
+                        })
+                    })
                 } else {
                     console.log("This is Just Text Message");
                     let insertedMessageId;
@@ -420,12 +528,36 @@ io.on('connection', async function (socket) {
                 }
             } else if (messageType === 1) {
                 console.log("Image Message");
+                let isReply = parseInt(messageInfo.parent_id);
+                if (isReply) {
+                    console.log('Image Reply Message');
+                } else {
+                    console.log('Image Message');
+                }
             } else if (messageType === 2) {
                 console.log("Audio Message");
+                let isReply = parseInt(messageInfo.parent_id);
+                if (isReply) {
+
+                } else {
+
+                }
             } else if (messageType === 3) {
                 console.log("Video Message");
+                let isReply = parseInt(messageInfo.parent_id);
+                if (isReply) {
+
+                } else {
+
+                }
             } else if (messageType === 4) {
                 console.log("Docs Message");
+                let isReply = parseInt(messageInfo.parent_id);
+                if (isReply) {
+
+                } else {
+
+                }
             }
         }
 
