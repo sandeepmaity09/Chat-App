@@ -17,10 +17,10 @@ const Message = sequlize.define('Message', {
         type: Sequlize.INTEGER(11)
     },
     chat_type: {
-        type: Sequlize.TINYINT(4)
+        type: Sequlize.INTEGER(4)
     },
     message_type: {
-        type: Sequlize.TINYINT(4)
+        type: Sequlize.INTEGER(4)
     },
     message: {
         type: Sequlize.STRING(500)
@@ -37,10 +37,10 @@ const Message = sequlize.define('Message', {
         allowNull: true
     },
     is_flagged: {
-        type: Sequlize.TINYINT(2)
+        type: Sequlize.INTEGER(2)
     },
     is_deleted: {
-        type: Sequlize.TINYINT(2)
+        type: Sequlize.INTEGER(2)
     },
     created_at: {
         type: Sequlize.DATE,

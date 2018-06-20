@@ -1,12 +1,14 @@
 const _ = require('underscore');
 const axios = require('axios');
+const ffmpeg = require('fluent-ffmpeg');
+const path = require('path');
 
 const responseObj = require('../helpers/responseObj');
 const Encrypter = require('../helpers/aesHelpers');
 
 const channelsService = require('../services/db/channels.service')();
 const channelUsersService = require('../services/db/channelUsers.service')();
-
+const messagesService = require('../services/db/messages.service')();
 
 
 let key = process.env.ENCRYPT_KEY;
@@ -215,12 +217,103 @@ const ChatController = () => {
 
     }
 
+    async function chatInsert(req, res) {
+        console.log('chatInsert file', req.file);
+        // console.log('chatInsert body', req.body);
+        let messageInfo = req.body;
+        try {
+            _.forEach(messageInfo, (item, key) => {
+                if (item !== null) {
+                    messageInfo[key] = Encrypter.aesDecryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                } else {
+                    delete messageInfo[key];
+                }
+            })
+        } catch (err) {
+            console.log('Encryption Error', err);
+        }
+
+        let channelInfo
+        try {
+            let channelContent = await channelsService.findChannel({ channel_name: messageInfo.channel_name });
+            channelInfo = channelContent;
+        } catch (err) {
+            console.log("Channel Fetching Error", err);
+        }
+        console.log(messageInfo);
+
+
+        if (parseInt(messageInfo.message_type) === 3) {
+            let filename = req.file.filename;
+            let filePrefix = filename.split('.')[0];
+            console.log('filename prefix', filePrefix);
+            try {
+                let tempLog = await ffmpeg(path.join(__dirname + '../../../uploads/videos/' + filename))
+                    .screenshots({
+                        count: 1,
+                        timemarks: ['1'],
+                        filename: filePrefix + '.jpg',
+                        folder: path.join(__dirname + '../../../uploads/thumbs'),
+                        size: '200x200'
+                    })
+                // console.log('this is tempLog', tempLog);
+            } catch (err) {
+                console.log("ffmpeg Error", err);
+            }
+        }
+        let insertedMessageId;
+        let insertedMessageInfo;
+        try {
+            let message = {
+                user_id: parseInt(messageInfo.user_id),
+                channel_id: parseInt(channelInfo.channel_id),
+                chat_type: parseInt(messageInfo.chat_type),
+                message_type: parseInt(messageInfo.message_type),
+                message: "",
+                parent_id: parseInt(messageInfo.parent_id),
+                filelink: req.file.filename,
+                thumbnail: ((parseInt(messageInfo.message_type) === 3) ? req.file.filename.split('.')[0].toString() + ".jpg" : ""),
+                is_flagged: 0,
+                is_deleted: 0,
+                created_at: messageInfo.created_at
+            }
+            let messageContent = await messagesService.saveMessage(message);
+            // console.log('this is messageContent', messageContent);
+            if (messageContent) {
+                insertedMessageId = messageContent.dataValues.message_id;
+                try {
+                    let tempContent = await messagesService.getMessageById(insertedMessageId);
+                    insertedMessageInfo = tempContent
+                } catch (err) {
+                    console.log("Database Error", err);
+                }
+            }
+        } catch (err) {
+            console.log("Insertation Error", err);
+        }
+
+        if (insertedMessageInfo) {
+            _.forEach(insertedMessageInfo, (item, key) => {
+                if (item != null) {
+                    insertedMessageInfo[key] = Encrypter.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                } else {
+                    delete insertedMessageInfo[key];
+                }
+            })
+            return res.json(new responseObj('message successfully inserted', 200, true, insertedMessageInfo));
+        } else {
+            return res.json(new responseObj('Internal Server Error', 500, false));
+        }
+        console.log('this is insertedMessageConent', insertedMessageInfo);
+    }
+
 
     return {
         createChannel,
         joinChannel,
         leaveChannel,
         chatHistory,
+        chatInsert,
         aesEncryptor,
         aesDecryptor
     }
