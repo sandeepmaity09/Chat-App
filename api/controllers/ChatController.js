@@ -64,7 +64,8 @@ const ChatController = () => {
 
     async function leaveChannel(req, res) {
         let channelName = req.body.channel_name;
-        let userId = req.body.user_id;
+        // let userId = req.body.user_id;
+        let userId = req.get('userid');
 
         if (!userId) {
             return res.json(new responseObj('user_id not provided, BAD REQUEST', 400, false));
@@ -129,7 +130,9 @@ const ChatController = () => {
 
     async function joinChannel(req, res) {
         let channelName = req.body.channel_name;
-        let userId = req.body.user_id;
+        // let userId = req.body.user_id;
+        let userId = req.get('userid');
+        console.log('this is userId', userId);
         if (!userId) {
             return res.json(new responseObj('user_id not provided, BAD REQUEST', 400, false));
         }
@@ -140,8 +143,8 @@ const ChatController = () => {
             channelName = Encrypter.aesDecryption(key, channelName);
             userId = Encrypter.aesDecryption(key, userId);
         } catch (err) {
-            console.log('decryption error', err);
-            return res.json(new responseObj('Encryption Error', 400, false));
+            console.log('Decryption Error', err);
+            return res.json(new responseObj('Decryption Error', 400, false));
         }
         let channel = {
             channel_name: channelName
