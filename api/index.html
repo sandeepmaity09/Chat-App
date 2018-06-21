@@ -59,6 +59,9 @@
     <script>
         // var Encryptor = require('bundle.js');
         // console.log(aesEncryption);
+
+        const FETCH_URL_ENCRYPT = "http://h2777857.stratoserver.net:3000/inrchat/chatservice/encrypt";
+        const FETCH_URL_DECRYPT = "http://h2777857.stratoserver.net:3000/inrchat/chatservice/decrypt";
         $(function () {
             // h2777857.stratoserver.net:3000
             var socket = io('http://h2777857.stratoserver.net:3000/', {
@@ -79,11 +82,11 @@
                 formData1.append('name', channel.channel_name);
                 formData2.append('name', channel.user_id);
 
-                channel.channel_name = await fetch("http://localhost:3000/inrchat/chatservice/encrypt", {
+                channel.channel_name = await fetch(FETCH_URL_ENCRYPT, {
                     method: 'POST',
                     body: formData1
                 }).then(res => res.json())
-                channel.user_id = await fetch("http://localhost:3000/inrchat/chatservice/encrypt", {
+                channel.user_id = await fetch(FETCH_URL_ENCRYPT, {
                     method: 'POST',
                     body: formData2
                 }).then(res => res.json())
@@ -106,11 +109,11 @@
                 formData1.append('name', channel.channel_name);
                 formData2.append('name', channel.user_id);
 
-                channel.channel_name = await fetch("http://localhost:3000/inrchat/chatservice/encrypt", {
+                channel.channel_name = await fetch(FETCH_URL_ENCRYPT, {
                     method: 'POST',
                     body: formData1
                 }).then(res => res.json())
-                channel.user_id = await fetch("http://localhost:3000/inrchat/chatservice/encrypt", {
+                channel.user_id = await fetch(FETCH_URL_ENCRYPT, {
                     method: 'POST',
                     body: formData2
                 }).then(res => res.json())
@@ -174,7 +177,7 @@
 
                 let formData1 = new FormData();
                 formData1.append('name', date.toString());
-                message.created_at = await fetch("http://localhost:3000/inrchat/chatservice/encrypt", {
+                message.created_at = await fetch(FETCH_URL_ENCRYPT, {
                     method: 'POST',
                     body: formData1
                 }).then(res => res.json())
@@ -182,7 +185,7 @@
                 // console.log('this is message', message.message);
                 let formData2 = new FormData();
                 formData2.append('name', message.message);
-                message.message = await fetch("http://localhost:3000/inrchat/chatservice/encrypt", {
+                message.message = await fetch(FETCH_URL_ENCRYPT, {
                     method: 'POST',
                     body: formData2
                 }).then(res => res.json())
@@ -191,7 +194,7 @@
                 if (parseInt(message.parent_id)) {
                     let formData3 = new FormData();
                     formData3.append('name', message.parent_id);
-                    message.parent_id = await fetch("http://localhost:3000/inrchat/chatservice/encrypt", {
+                    message.parent_id = await fetch(FETCH_URL_ENCRYPT, {
                         method: 'POST',
                         body: formData3
                     }).then(res => res.json())
@@ -289,7 +292,7 @@
                 // let message = 
                 let formData1 = new FormData();
                 formData1.append('name', msgdata.message.message);
-                let message1 = await fetch("http://localhost:3000/inrchat/chatservice/decrypt", {
+                let message1 = await fetch(FETCH_URL_DECRYPT, {
                     method: 'POST',
                     body: formData1
                 }).then(res => res.json())
