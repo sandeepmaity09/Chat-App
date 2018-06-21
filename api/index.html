@@ -34,6 +34,12 @@
         <button>Switch Channel(Whenever You're Switching Channel)</button>
     </form>
 
+    <form id="leavechannel" action="">
+        <input id="lc" placeholder="Enter Channel Name" autocomplete="off" />
+        <input id="lcu" placeholder="Enter User Id" autocomplete="off" />
+        <button>Leave Room</button>
+    </form>
+
     <form id="sendmessage" action="">
         <input id="replymsgid" placeholder="Message Id (If Reply) " autocomplete="off" />
         <input id="message" placeholder="Enter Your Message Here" autocomplete="off" />
@@ -48,10 +54,6 @@
         <button>Get Rooms</button>
     </form>
 
-    <form id="leavechannel" action="">
-        <button>Leave Room</button>
-    </form>
-
     <!-- <script src="/public/bundle.js"></script> -->
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
@@ -60,15 +62,23 @@
         // var Encryptor = require('bundle.js');
         // console.log(aesEncryption);
 
-        const FETCH_URL_ENCRYPT = "http://h2777857.stratoserver.net:3000/inrchat/chatservice/encrypt";
-        const FETCH_URL_DECRYPT = "http://h2777857.stratoserver.net:3000/inrchat/chatservice/decrypt";
+        // SERVER
+        // const FETCH_URL_ENCRYPT = "http://h2777857.stratoserver.net:3000/inrchat/chatservice/encrypt";
+        // const FETCH_URL_DECRYPT = "http://h2777857.stratoserver.net:3000/inrchat/chatservice/decrypt";
+        // const HOST = "http://h2777857.stratoserver.net:3000/";
+
+
+        // LOCALHOST
+        const FETCH_URL_ENCRYPT = "http://localhost:3000/inrchat/chatservice/encrypt";
+        const FETCH_URL_DECRYPT = "http://localhost:3000/inrchat/chatservice/decrypt";
+        const HOST = "http://localhost:3000/";
+
         $(function () {
-            // h2777857.stratoserver.net:3000
-            var socket = io('http://h2777857.stratoserver.net:3000/', {
+
+            let socket = io(HOST, {
                 transports: ['websocket']
             });
-            // console.log("Encryptor", aesEncryption);
-            // console.log("Decryptor", aesDecryption);
+
             $("#joinchannel").submit(async function (e) {
                 e.preventDefault();
                 let formData1 = new FormData();
@@ -96,7 +106,7 @@
                 return;
             })
 
-            var channel;
+            let channel;
 
             $("#switchchannel").submit(async function (e) {
                 e.preventDefault();
@@ -123,16 +133,30 @@
                 return;
             })
 
+            $("#leavechannel").submit(async function (e) {
+                e.preventDefault();
+                let formData1 = new FormData();
+                let formData2 = new FormData();
 
-            $("#leavechannel").submit(function () {
-                socket.emit("leave channel", JSON.stringify({
-                    channel_name: "43VCt+fzlg1JalHhbtfl0w==:qtJMbuxQ1mMnTLNcODTksA==",
-                    user_id: "acmekijdPsD7mguQoeaOug==:JNz/iR7V/Cn4Nd9+O5Yy1Q=="
-                }));
-                return false;
+                let channel = {};
+
+                channel.channel_name = "" + $("#lc").val();
+                channel.user_id = "" + $("#lcu").val();
+
+                formData1.append('name', channel.channel_name);
+                formData2.append('name', channel.user_id);
+
+                channel.channel_name = await fetch(FETCH_URL_ENCRYPT, {
+                    method: 'POST',
+                    body: formData1
+                }).then(res => res.json())
+                channel.user_id = await fetch(FETCH_URL_ENCRYPT, {
+                    method: 'POST',
+                    body: formData2
+                }).then(res => res.json())
+                socket.emit('leave channel', JSON.stringify(channel));
+                return;
             })
-
-
 
             $('#getclients').submit(function () {
                 socket.emit('show clients');
@@ -172,7 +196,6 @@
                 message.user_id = channel.user_id;
                 message.channel_name = channel.channel_name;
 
-                // message.parent_id = "876GFUwvtUnGOY/D1dYYsg==:PGbkkihwJZKn+iloGUC0Gw==";
                 message.message_type = "k7UnTag9oQ/QKXVv7Yv1Fg==:dViOLMJxwj4ldHV0tmWBNQ==";
 
                 let formData1 = new FormData();
@@ -182,7 +205,6 @@
                     body: formData1
                 }).then(res => res.json())
 
-                // console.log('this is message', message.message);
                 let formData2 = new FormData();
                 formData2.append('name', message.message);
                 message.message = await fetch(FETCH_URL_ENCRYPT, {
@@ -210,15 +232,19 @@
 
 
                 /*
-                message.user_id = 120;
-                message.box_id = "4bbf1292ba9776b0697efec8";
-                message.message = "" + $('#m').val();
-                message.status = "1";
-                message.created_at = date;
-                message.type = "";
-                message.message_id = "";
-                message.isliketext = "";
-                message.parent_id = 1;
+                message.message_id = "K3M6MI69kvlpEH3bWQI+2g==:2Mbe82elviGIRVoqS8DYlw==";
+                message.user_id = "9xf4u7RWrQ78xfvHiW4W7w==:K8htgsXbT6y9/lWshxE43g==";
+                message.channel_id = "SMAtnvozCqDpTNsxKJC0SQ==:YtRFSRjQkPTsBPVXSKDMWQ==";
+                message.chat_type = "rrK53Z/pN1a1wDySzKZ+9Q==:H4o8Sye2hozBdbdMtAHh8g==";
+                message.message_type = "oP6AAlODteGmizPYHcRszA==:PikgPi5tGUaO/amCDFLk1g==";
+                message.message = "on+/dByjk+nMBJIolIbk3w==:njDtFPmvxICw7P7xDZDwVA==";
+                // message.parent_id = "riD5Gc/Vy+91Zj6YsYqxeg==:XV16DXEsMeYBfkQBlbI/bg==";
+                message.parent_id = "XftEc9UiGhfLlofDY+JaWg==:fxLrXTRXCcUz6FNqg6tsnQ==";
+                message.filelink = "7JVHi7Xo4QNkzdSWz+tji+oLjzyPw3TdkInnKNNjN9VSvGi/Ej9PFfCxYs0G0yA2:DiVTA8sy5CkAY/jZBzkkDg==";
+                message.thumbnail = "LfqfKfmYiRrHw2JwOP71YTO3jGA1EaQCJr/FYKz7ovH27QcWRjD4Ay+qXn+6Rq1h:smZMKuYXxi/zxAxNGAXF+A==";
+                message.is_flagged = "gph4CH/yRGbNhfVdlq7s1Q==:TezWj6j7xYDofr2bF9Mlig==";
+                message.is_deleted = "88cfmLRCrCam6KVFcqRu2g==:TEwF6XJrWNzU7BhEt73LBw==";
+                message.created_at = "uer9sBTJDOHOX55a/oqAbh8Zwm4d/GXQHNYaw/c4KLQ=:bwBw3bWRZtpS7OzhFEMg9g==";
                 */
 
                 /*
@@ -268,7 +294,6 @@
                 return false;
             });
 
-
             socket.on('show clients', function (data) {
                 console.log('this is data', data);
             });
@@ -277,36 +302,55 @@
                 console.log('these are rooms', data);
             })
 
-
             socket.on('send message', function (msg) {
                 // console.log('')
                 // $('#messages').append($('<li>').text(msg));
                 // window.scrollTo(0, document.body.scrollHeight);
             });
 
-
             socket.on("send", async function (msgdata) {
                 console.log('this is send emit', msgdata);
                 // msgdata = JSON.parse(msgdata);
                 console.log('this is message', msgdata.message.message);
-                // let message = 
-                let formData1 = new FormData();
-                formData1.append('name', msgdata.message.message);
-                let message1 = await fetch(FETCH_URL_DECRYPT, {
+                let message_type = new FormData();
+                message_type.append('name', msgdata.message.message_type);
+                let messageType = await fetch(FETCH_URL_DECRYPT, {
                     method: 'POST',
-                    body: formData1
+                    body: message_type
                 }).then(res => res.json())
-                console.log('this is message', message1);
-                $("#messages").append($('<li>').text(message1));
-                window.scrollTo(0, document.body.scrollHeight);
+
+                if (parseInt(messageType) === 0) {
+                    let formData1 = new FormData();
+                    formData1.append('name', msgdata.message.message);
+                    let message1 = await fetch(FETCH_URL_DECRYPT, {
+                        method: 'POST',
+                        body: formData1
+                    }).then(res => res.json())
+                    console.log('this is message', message1);
+                    $("#messages").append($('<li>').text(message1));
+                    window.scrollTo(0, document.body.scrollHeight);
+                } else {
+                    if (parseInt(messageType) === 1) {
+                        $("#messages").append($('<li>').text("IMAGE"));
+                    } else if (parseInt(messageType) === 2) {
+                        $("#messages").append($('<li>').text("AUDIO"));
+                    } else if (parseInt(messageType) === 3) {
+                        $("#messages").append($('<li>').text("VIDEO"));
+                    } else {
+                        $("#messages").append($('<li>').text("DOCS"));
+                    }
+                    window.scrollTo(0, document.body.scrollHeight);
+                }
             })
 
             socket.on("msg", function (data) {
                 console.log('this is msg emit', data);
             })
+
             socket.on("sendandroid", function (msgdata) {
                 console.log('this is send android emit', msgdata);
             })
+
             socket.on("msgandroid", function (data) {
                 console.log('this is msg android emit', data);
             })
@@ -349,6 +393,7 @@
                 $('#socketid').text(data.socketID);
                 $('#channelid').text(Object.keys(data.channelID))
             })
+
         });
     </script>
 </body>

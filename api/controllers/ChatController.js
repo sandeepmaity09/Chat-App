@@ -10,7 +10,6 @@ const channelsService = require('../services/db/channels.service')();
 const channelUsersService = require('../services/db/channelUsers.service')();
 const messagesService = require('../services/db/messages.service')();
 
-
 let key = process.env.ENCRYPT_KEY;
 
 const ChatController = () => {
@@ -303,11 +302,12 @@ const ChatController = () => {
                     delete insertedMessageInfo[key];
                 }
             })
+            // insertedMessageInfo = Encrypter.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(insertedMessageInfo));
             return res.json(new responseObj('message successfully inserted', 200, true, insertedMessageInfo));
         } else {
             return res.json(new responseObj('Internal Server Error', 500, false));
         }
-        console.log('this is insertedMessageConent', insertedMessageInfo);
+        // console.log('this is insertedMessageConent', insertedMessageInfo);
     }
 
 

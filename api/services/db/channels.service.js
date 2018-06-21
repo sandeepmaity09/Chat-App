@@ -15,11 +15,16 @@ const ChannelsService = () => {
         return Channel.find({ where: { channel_name: channel.channel_name }, raw: true });
     }
 
+    const findChannelById = (id) => {
+        return Channel.find({ where: { channel_id: id }, raw: true })
+    }
+
 
     return {
         createChannel,
         findOrCreateChannel,
-        findChannel
+        findChannel,
+        findChannelById
     }
 }
 

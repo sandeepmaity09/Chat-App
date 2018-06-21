@@ -115,6 +115,8 @@ const Encryptor = require('../api/helpers/aesHelpers');
  * Services 
  */
 const channelsService = require('../api/services/db/channels.service')();
+const CONSTANTS = require('../api/helpers/chatConstants');
+
 
 
 app.get('/', function (req, res) {
@@ -304,26 +306,39 @@ io.on('connection', async function (socket) {
         // console.log('this is messageInfo before parsing', messageInfo);
 
         try {
-            for (let property in messageInfo) {
-                messageInfo[property] = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, messageInfo[property]);
-            }
+            // for (let property in messageInfo) {
+            //     messageInfo[property] = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, messageInfo[property]);
+            // }
+            _.forEach(messageInfo, (value, key) => {
+                messageInfo[key] = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, messageInfo[key]);
+            })
         } catch (err) {
             console.log("Decryption Error", err);
         }
 
-        // console.log('this is messageInfo after parsing', messageInfo);
+        console.log('this is messageInfo after parsing', messageInfo);
 
 
         let chatType = parseInt(messageInfo.chat_type);
         let messageType = parseInt(messageInfo.message_type);
         // console.log(messageType);
 
+
         let channelInfo;
-        try {
-            channelInfo = await channelsService.findChannel({ channel_name: messageInfo.channel_name })
-            // console.log('this is channelInfo', channelInfo);
-        } catch (err) {
-            console.log("Channel Fetching Error", err);
+        // console.log(messageInfo.channel_name);
+        if (messageInfo.channel_name) {
+            try {
+                channelInfo = await channelsService.findChannel({ channel_name: messageInfo.channel_name })
+                // console.log('this is channelInfo', channelInfo);
+            } catch (err) {
+                console.log("Channel Fetching Error", err);
+            }
+        } else {
+            try {
+                channelInfo = await channelsService.findChannelById(parseInt(messageInfo.channel_id));
+            } catch (err) {
+                console.log("Channel Fetching Error", err);
+            }
         }
 
         if (chatType) {
@@ -434,7 +449,7 @@ io.on('connection', async function (socket) {
         } else {
             // Group Chat
             console.log('GROUP CHAT');
-            if (messageType === 0) {
+            if (messageType === CONSTANTS.MSG_TYPE_TEXT) {
                 console.log("TEXT MESSAGE");
                 let isReply = parseInt(messageInfo.parent_id);
                 if (isReply) {
@@ -526,37 +541,93 @@ io.on('connection', async function (socket) {
                     })
 
                 }
-            } else if (messageType === 1) {
+            } else if (messageType === CONSTANTS.MSG_TYPE_IMAGE) {
                 console.log("Image Message");
                 let isReply = parseInt(messageInfo.parent_id);
                 if (isReply) {
                     console.log('Image Reply Message');
+                    console.log(messageInfo);
+                    _.forEach(messageInfo, (value, key) => {
+                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    })
+                    io.in(channelInfo.channel_id).emit('send', {
+                        message: messageInfo
+                    });
                 } else {
                     console.log('Image Message');
+                    console.log(messageInfo);
+                    _.forEach(messageInfo, (value, key) => {
+                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    })
+                    io.in(channelInfo.channel_id).emit('send', {
+                        message: messageInfo
+                    });
                 }
-            } else if (messageType === 2) {
+            } else if (messageType === CONSTANTS.MSG_TYPE_AUDIO) {
                 console.log("Audio Message");
                 let isReply = parseInt(messageInfo.parent_id);
                 if (isReply) {
-
+                    console.log("Audio Reply Message");
+                    console.log(messageInfo);
+                    _.forEach(messageInfo, (value, key) => {
+                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    })
+                    io.in(channelInfo.channel_id).emit('send', {
+                        message: messageInfo
+                    });
                 } else {
-
+                    console.log("Audio Message");
+                    console.log(messageInfo);
+                    _.forEach(messageInfo, (value, key) => {
+                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    })
+                    io.in(channelInfo.channel_id).emit('send', {
+                        message: messageInfo
+                    });
                 }
-            } else if (messageType === 3) {
+            } else if (messageType === CONSTANTS.MSG_TYPE_VIDEO) {
                 console.log("Video Message");
                 let isReply = parseInt(messageInfo.parent_id);
                 if (isReply) {
-
+                    console.log("Video Reply Message");
+                    console.log(messageInfo);
+                    _.forEach(messageInfo, (value, key) => {
+                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    })
+                    io.in(channelInfo.channel_id).emit('send', {
+                        message: messageInfo
+                    });
                 } else {
-
+                    console.log("Video Message");
+                    console.log(messageInfo);
+                    _.forEach(messageInfo, (value, key) => {
+                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    })
+                    io.in(channelInfo.channel_id).emit('send', {
+                        message: messageInfo
+                    });
                 }
-            } else if (messageType === 4) {
+            } else if (messageType === CONSTANTS.MSG_TYPE_DOCS) {
                 console.log("Docs Message");
                 let isReply = parseInt(messageInfo.parent_id);
                 if (isReply) {
-
+                    console.log("Docs Reply Message");
+                    console.log(messageInfo);
+                    _.forEach(messageInfo, (value, key) => {
+                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    })
+                    io.in(channelInfo.channel_id).emit('send', {
+                        message: messageInfo
+                    });
                 } else {
-
+                    console.log("Docs Message");
+                    console.log(messageInfo);
+                    _.forEach(messageInfo, (value, key) => {
+                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    })
+                    io.in(channelInfo.channel_id).emit('send', {
+                        message: messageInfo
+                    });
                 }
             }
         }

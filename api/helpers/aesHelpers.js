@@ -129,7 +129,7 @@ const aesDecryption = function (key, data) {
     let deciper = crypto.createDecipheriv(algorithm, key, decodedIV);
     let decrypted = deciper.update(encodedData, 'base64', 'utf8');
     decrypted += deciper.final('utf8');
-
+    // decrypted = decrypted.replace(/\r?\n|\r|\\|\"/g, " ");
     // console.log('this is decoded data', decrypted);
     return decrypted;
 }
