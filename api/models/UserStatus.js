@@ -1,21 +1,23 @@
 const Sequlize = require('sequelize');
 const sequlize = require('../../config/database');
 
-const tableName = 'chat_channels';
+const tableName = 'chat_user_status';
 
-const Channel = sequlize.define('Channel', {
-    channel_id: {
+const UserStatus = sequlize.define('UserStatus', {
+    userstatus_id: {
         type: Sequlize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
         unique: true
     },
-    channel_name: {
-        type: Sequlize.STRING,
-        unique: true,
+    user_id: {
+        type: Sequlize.INTEGER(11)
     },
-    channel_status: {
+    user_status: {
         type: Sequlize.INTEGER(2)
+    },
+    userstatus_status: {
+        type: Sequlize.TINYINT(2)
     },
     created_at: {
         type: Sequlize.DATE,
@@ -32,4 +34,4 @@ const Channel = sequlize.define('Channel', {
     }
 )
 
-module.exports = Channel;
+module.exports = UserStatus;

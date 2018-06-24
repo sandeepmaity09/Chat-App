@@ -1,20 +1,22 @@
 const Sequlize = require('sequelize');
 const sequlize = require('../../config/database');
 
-const tableName = 'chat_channels';
+const tableName = 'chat_liked_messages';
 
-const Channel = sequlize.define('Channel', {
-    channel_id: {
+const LikedMessages = sequlize.define('LikedMessages', {
+    likedmessage_id: {
         type: Sequlize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
         unique: true
     },
-    channel_name: {
-        type: Sequlize.STRING,
-        unique: true,
+    message_id: {
+        type: Sequlize.BIGINT(11)
     },
-    channel_status: {
+    user_id: {
+        type: Sequlize.INTEGER(11),
+    },
+    likedmessage_status: {
         type: Sequlize.INTEGER(2)
     },
     created_at: {
@@ -32,4 +34,4 @@ const Channel = sequlize.define('Channel', {
     }
 )
 
-module.exports = Channel;
+module.exports = LikedMessages;

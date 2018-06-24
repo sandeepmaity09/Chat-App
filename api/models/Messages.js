@@ -36,13 +36,20 @@ const Message = sequlize.define('Message', {
         type: Sequlize.STRING(255),
         allowNull: true
     },
+    is_edited: {
+        type: Sequlize.INTEGER(2)
+    },
     is_flagged: {
         type: Sequlize.INTEGER(2)
     },
-    is_deleted: {
+    message_status: {
         type: Sequlize.INTEGER(2)
     },
     created_at: {
+        type: Sequlize.DATE,
+        defaultValue: Sequlize.NOW
+    },
+    updated_at: {
         type: Sequlize.DATE,
         defaultValue: Sequlize.NOW
     }

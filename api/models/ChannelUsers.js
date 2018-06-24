@@ -4,7 +4,7 @@ const sequlize = require('../../config/database');
 const tableName = 'chat_channel_users';
 
 const ChannelUsers = sequlize.define('ChannelUsers', {
-    id: {
+    channelusermap_id: {
         type: Sequlize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
@@ -15,6 +15,9 @@ const ChannelUsers = sequlize.define('ChannelUsers', {
     },
     user_id: {
         type: Sequlize.INTEGER,
+    },
+    channelusermap_status: {
+        type: Sequlize.INTEGER(2)
     },
     created_at: {
         type: Sequlize.DATE,
