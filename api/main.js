@@ -306,9 +306,6 @@ io.on('connection', async function (socket) {
         // console.log('this is messageInfo before parsing', messageInfo);
 
         try {
-            // for (let property in messageInfo) {
-            //     messageInfo[property] = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, messageInfo[property]);
-            // }
             _.forEach(messageInfo, (value, key) => {
                 messageInfo[key] = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, messageInfo[key]);
             })
@@ -317,7 +314,6 @@ io.on('connection', async function (socket) {
         }
 
         console.log('this is messageInfo after parsing', messageInfo);
-
 
         let chatType = parseInt(messageInfo.chat_type);
         let messageType = parseInt(messageInfo.message_type);
@@ -351,48 +347,91 @@ io.on('connection', async function (socket) {
                     console.log("This is Reply");
                     let insertedMessageId;
                     let insertedMessageInfo;
-
-                    try {
-                        messageInfo.is_flagged = 0;
-                        messageInfo.is_deleted = 0;
-                        let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_flagged,is_deleted,created_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.is_deleted)},"${messageInfo.created_at}")`, { type: sequelize.QueryTypes.INSERT })
-                        insertedMessageId = insertedMessageContent;
-                    } catch (err) {
-                        console.log("Insertation Error", err);
-                    }
-
-                    try {
-                        let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
-                        if (insertedMessageContent.length) {
-                            insertedMessageInfo = insertedMessageContent[0];
+                    if (messageInfo.is_edited === 0) {
+                        try {
+                            messageInfo.is_edited = 0;
+                            messageInfo.is_flagged = 0;
+                            messageInfo.message_status = 0;
+                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
+                            insertedMessageId = insertedMessageContent;
+                        } catch (err) {
+                            console.log("Insertation Error", err);
                         }
-                    } catch (err) {
-                        console.log("Selection Error", err);
-                    }
-                    delete insertedMessageInfo.channel_id;
-                    insertedMessageInfo.channel_name = channelInfo.channel_name;
 
-                    try {
-                        _.forEach(insertedMessageInfo, (item, key) => {
-                            if (item !== null) {
-                                insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
-                            } else {
-                                delete insertedMessageInfo[key];
+                        try {
+                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
+                            if (insertedMessageContent.length) {
+                                insertedMessageInfo = insertedMessageContent[0];
                             }
+                        } catch (err) {
+                            console.log("Selection Error", err);
+                        }
+                        delete insertedMessageInfo.channel_id;
+                        insertedMessageInfo.channel_name = channelInfo.channel_name;
+
+                        try {
+                            _.forEach(insertedMessageInfo, (item, key) => {
+                                if (item !== null) {
+                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                                } else {
+                                    delete insertedMessageInfo[key];
+                                }
+                            })
+                            console.log("this is insertedMessageInfo", insertedMessageInfo);
+                        } catch (err) {
+                            console.log("Encryption Error", err);
+                        }
+
+                        console.log('Message send to ', channelInfo.channel_id);
+
+                        setTimeout(function () {
+                            io.in(channelInfo.channel_id).emit('send', {
+                                message: insertedMessageInfo
+                            })
                         })
-                        console.log("this is insertedMessageInfo", insertedMessageInfo);
-                    } catch (err) {
-                        console.log("Encryption Error", err);
+                    } else {
+                        try {
+                            messageInfo.is_edited = 0;
+                            messageInfo.is_flagged = 0;
+                            messageInfo.message_status = 0;
+                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
+                            insertedMessageId = insertedMessageContent;
+                        } catch (err) {
+                            console.log("Insertation Error", err);
+                        }
+
+                        try {
+                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
+                            if (insertedMessageContent.length) {
+                                insertedMessageInfo = insertedMessageContent[0];
+                            }
+                        } catch (err) {
+                            console.log("Selection Error", err);
+                        }
+                        delete insertedMessageInfo.channel_id;
+                        insertedMessageInfo.channel_name = channelInfo.channel_name;
+
+                        try {
+                            _.forEach(insertedMessageInfo, (item, key) => {
+                                if (item !== null) {
+                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                                } else {
+                                    delete insertedMessageInfo[key];
+                                }
+                            })
+                            console.log("this is insertedMessageInfo", insertedMessageInfo);
+                        } catch (err) {
+                            console.log("Encryption Error", err);
+                        }
+
+                        console.log('Message send to ', channelInfo.channel_id);
+
+                        setTimeout(function () {
+                            io.in(channelInfo.channel_id).emit('send', {
+                                message: insertedMessageInfo
+                            })
+                        })
                     }
-
-                    console.log('Message send to ', channelInfo.channel_id);
-
-                    setTimeout(function () {
-                        io.in(channelInfo.channel_id).emit('send', {
-                            message: insertedMessageInfo
-                        })
-                    })
-
                 } else {
                     console.log("This is Just Text Message");
                     let insertedMessageId;
@@ -453,93 +492,228 @@ io.on('connection', async function (socket) {
                 console.log("TEXT MESSAGE");
                 let isReply = parseInt(messageInfo.parent_id);
                 if (isReply) {
+                    // Reply Message
                     console.log("This is Reply");
                     let insertedMessageId;
                     let insertedMessageInfo;
-
-                    try {
-                        messageInfo.is_flagged = 0;
-                        messageInfo.is_deleted = 0;
-                        let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_flagged,is_deleted,created_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.is_deleted)},"${messageInfo.created_at}")`, { type: sequelize.QueryTypes.INSERT })
-                        insertedMessageId = insertedMessageContent;
-                    } catch (err) {
-                        console.log("Insertation Error", err);
-                    }
-
-                    try {
-                        let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
-                        if (insertedMessageContent.length) {
-                            insertedMessageInfo = insertedMessageContent[0];
+                    if (parseInt(messageInfo.is_edited)) {
+                        // Edited Message
+                        try {
+                            messageInfo.is_edited = 1;
+                            messageInfo.is_flagged = 0;
+                            messageInfo.message_status = 0;
+                            // let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
+                            insertedMessageId = insertedMessageContent;
+                        } catch (err) {
+                            console.log("Insertation Error", err);
                         }
-                    } catch (err) {
-                        console.log("Selection Error", err);
-                    }
-                    delete insertedMessageInfo.channel_id;
-                    insertedMessageInfo.channel_name = channelInfo.channel_name;
 
-                    try {
-                        _.forEach(insertedMessageInfo, (item, key) => {
-                            if (item !== null) {
-                                insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
-                            } else {
-                                delete insertedMessageInfo[key];
+                        try {
+                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
+                            if (insertedMessageContent.length) {
+                                insertedMessageInfo = insertedMessageContent[0];
                             }
+                        } catch (err) {
+                            console.log("Selection Error", err);
+                        }
+                        delete insertedMessageInfo.channel_id;
+                        insertedMessageInfo.channel_name = channelInfo.channel_name;
+
+                        try {
+                            _.forEach(insertedMessageInfo, (item, key) => {
+                                if (item !== null) {
+                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                                } else {
+                                    delete insertedMessageInfo[key];
+                                }
+                            })
+                            console.log("this is insertedMessageInfo", insertedMessageInfo);
+                        } catch (err) {
+                            console.log("Encryption Error", err);
+                        }
+
+                        console.log('Message send to ', channelInfo.channel_id);
+
+                        setTimeout(function () {
+                            io.in(channelInfo.channel_id).emit('send', {
+                                message: insertedMessageInfo
+                            })
                         })
-                        console.log("this is insertedMessageInfo", insertedMessageInfo);
-                    } catch (err) {
-                        console.log("Encryption Error", err);
+                    } else {
+                        // New message
+                        try {
+                            messageInfo.is_edited = 0;
+                            messageInfo.is_flagged = 0;
+                            messageInfo.message_status = 0;
+                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
+                            insertedMessageId = insertedMessageContent;
+                        } catch (err) {
+                            console.log("Insertation Error", err);
+                        }
+
+                        try {
+                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
+                            if (insertedMessageContent.length) {
+                                insertedMessageInfo = insertedMessageContent[0];
+                            }
+                        } catch (err) {
+                            console.log("Selection Error", err);
+                        }
+                        delete insertedMessageInfo.channel_id;
+                        insertedMessageInfo.channel_name = channelInfo.channel_name;
+
+                        try {
+                            _.forEach(insertedMessageInfo, (item, key) => {
+                                if (item !== null) {
+                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                                } else {
+                                    delete insertedMessageInfo[key];
+                                }
+                            })
+                            console.log("this is insertedMessageInfo", insertedMessageInfo);
+                        } catch (err) {
+                            console.log("Encryption Error", err);
+                        }
+
+                        console.log('Message send to ', channelInfo.channel_id);
+
+                        setTimeout(function () {
+                            io.in(channelInfo.channel_id).emit('send', {
+                                message: insertedMessageInfo
+                            })
+                        })
                     }
+                    // try {
+                    //     messageInfo.is_flagged = 0;
+                    //     messageInfo.is_deleted = 0;
+                    //     let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_flagged,is_deleted,created_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.is_deleted)},"${messageInfo.created_at}")`, { type: sequelize.QueryTypes.INSERT })
+                    //     insertedMessageId = insertedMessageContent;
+                    // } catch (err) {
+                    //     console.log("Insertation Error", err);
+                    // }
 
-                    console.log('Message send to ', channelInfo.channel_id);
+                    // try {
+                    //     let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
+                    //     if (insertedMessageContent.length) {
+                    //         insertedMessageInfo = insertedMessageContent[0];
+                    //     }
+                    // } catch (err) {
+                    //     console.log("Selection Error", err);
+                    // }
+                    // delete insertedMessageInfo.channel_id;
+                    // insertedMessageInfo.channel_name = channelInfo.channel_name;
 
-                    setTimeout(function () {
-                        io.in(channelInfo.channel_id).emit('send', {
-                            message: insertedMessageInfo
-                        })
-                    })
+                    // try {
+                    //     _.forEach(insertedMessageInfo, (item, key) => {
+                    //         if (item !== null) {
+                    //             insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                    //         } else {
+                    //             delete insertedMessageInfo[key];
+                    //         }
+                    //     })
+                    //     console.log("this is insertedMessageInfo", insertedMessageInfo);
+                    // } catch (err) {
+                    //     console.log("Encryption Error", err);
+                    // }
+
+                    // console.log('Message send to ', channelInfo.channel_id);
+
+                    // setTimeout(function () {
+                    //     io.in(channelInfo.channel_id).emit('send', {
+                    //         message: insertedMessageInfo
+                    //     })
+                    // })
                 } else {
+                    // Original Text Message
                     console.log("This is Just Text Message");
-                    let insertedMessageId;
-                    let insertedMessageInfo;
-                    try {
-                        messageInfo.is_flagged = 0;
-                        messageInfo.is_deleted = 0;
-                        let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_flagged,is_deleted,created_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.is_deleted)},"${messageInfo.created_at}")`, { type: sequelize.QueryTypes.INSERT })
-                        // console.log('this is id of insertedMessageContent', insertedMessageContent);
-                        insertedMessageId = insertedMessageContent;
-                    } catch (err) {
-                        console.log("Insertation Error", err);
-                    }
-                    try {
-                        let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
-                        if (insertedMessageContent.length) {
+                    if (parseInt(messageInfo.is_edited)) {
+                        // Edited
+                        let insertedMessageInfo;
+                        let updatedMessageInfo;
+                        try {
+                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            // console.log('this is insertedMessageContent', insertedMessageContent);
                             insertedMessageInfo = insertedMessageContent[0];
-                            // console.log('this is insertedMessageInfo', insertedMessageInfo);
+                        } catch (err) {
+                            console.log("Insertation Error", err);
                         }
-                    } catch (err) {
-                        console.log("Selection Error", err);
-                    }
-                    delete insertedMessageInfo.channel_id;
-                    insertedMessageInfo.channel_name = channelInfo.channel_name;
 
-                    try {
-                        _.forEach(insertedMessageInfo, (item, key) => {
-                            if (item !== null) {
-                                insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
-                            } else {
-                                delete insertedMessageInfo[key];
+                        try {
+                            let updatedMessageContent = await sequelize.query(`UPDATE chat_messages SET message="${messageInfo.message}",is_edited=${parseInt(messageInfo.is_edited)},updated_at="${messageInfo.updated_at}" WHERE message_id=${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                            // console.log('this is updatedMessageContent', updatedMessageContent);
+                        } catch (err) {
+                            console.log("Updateion Error", err);
+                        }
+
+                        try {
+                            let updatedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            console.log('this is updatedMessageContent', updatedMessageContent);
+                            updatedMessageInfo = updatedMessageContent[0];
+                        } catch (err) {
+                            console.log("Insertation Error", err);
+                        }
+                        delete updatedMessageInfo.channel_id;
+                        updatedMessageInfo.channel_name = channelInfo.channel_name;
+                        try {
+                            _.forEach(updatedMessageInfo, (item, key) => {
+                                if (item !== null) {
+                                    updatedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(updatedMessageInfo[key]));
+                                } else {
+                                    delete updatedMessageInfo[key];
+                                }
+                            })
+                            console.log("this is insertedMessageInfo", updatedMessageInfo);
+                        } catch (err) {
+                            console.log("Encryption Error", err);
+                        }
+                        setTimeout(function () {
+                            io.in(channelInfo.channel_id).emit('send', {
+                                message: updatedMessageInfo
+                            })
+                        })
+                    } else {
+                        let insertedMessageId;
+                        let insertedMessageInfo;
+                        try {
+                            messageInfo.is_flagged = 0;
+                            messageInfo.message_status = 0;
+                            // let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_flagged,is_deleted,created_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.is_deleted)},"${messageInfo.created_at}")`, { type: sequelize.QueryTypes.INSERT })
+                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
+                            // console.log('this is id of insertedMessageContent', insertedMessageContent);
+                            insertedMessageId = insertedMessageContent;
+                        } catch (err) {
+                            console.log("Insertation Error", err);
+                        }
+                        try {
+                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
+                            if (insertedMessageContent.length) {
+                                insertedMessageInfo = insertedMessageContent[0];
+                                // console.log('this is insertedMessageInfo', insertedMessageInfo);
                             }
-                        })
-                        console.log("this is insertedMessageInfo", insertedMessageInfo);
-                    } catch (err) {
-                        console.log("Encryption Error", err);
-                    }
-                    setTimeout(function () {
-                        io.in(channelInfo.channel_id).emit('send', {
-                            message: insertedMessageInfo
-                        })
-                    })
+                        } catch (err) {
+                            console.log("Selection Error", err);
+                        }
+                        delete insertedMessageInfo.channel_id;
+                        insertedMessageInfo.channel_name = channelInfo.channel_name;
 
+                        try {
+                            _.forEach(insertedMessageInfo, (item, key) => {
+                                if (item !== null) {
+                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                                } else {
+                                    delete insertedMessageInfo[key];
+                                }
+                            })
+                            console.log("this is insertedMessageInfo", insertedMessageInfo);
+                        } catch (err) {
+                            console.log("Encryption Error", err);
+                        }
+                        setTimeout(function () {
+                            io.in(channelInfo.channel_id).emit('send', {
+                                message: insertedMessageInfo
+                            })
+                        })
+                    }
                 }
             } else if (messageType === CONSTANTS.MSG_TYPE_IMAGE) {
                 console.log("Image Message");

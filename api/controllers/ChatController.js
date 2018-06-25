@@ -29,6 +29,7 @@ const ChatController = () => {
             // console.log('this is channel Name', channelName);
         } catch (err) {
             console.log('this is error from channel Name decoder', err);
+            // console.log()
         }
 
         if (!channelName) {
@@ -36,7 +37,6 @@ const ChatController = () => {
         }
 
         let channelInfo;
-
         let channel = {
             channel_name: channelName
         }
@@ -48,12 +48,21 @@ const ChatController = () => {
                 try {
                     let tempContent = await channelsService.findOrCreateChannel(channel);
                     channelInfo = tempContent[0];
+                    channelInfo = Encrypter.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(channelInfo));
                 } catch (err) {
                     console.log('this is error form createGroup, groupData inner', err);
                 }
                 return res.json(new responseObj('new channel successfully created', 200, true, channelInfo))
             } else {
-                return res.json(new responseObj('channel already exist', 400, false));
+                // return res.json(new responseObj('channel already exist', 400, false));
+                try {
+                    let tempContent = await channelsService.findOrCreateChannel(channel);
+                    channelInfo = tempContent[0];
+                    channelInfo = Encrypter.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(channelInfo));
+                } catch (err) {
+                    console.log('this is error form createGroup, groupData inner', err);
+                }
+                return res.json(new responseObj('channel already exist', 200, true, channelInfo))
             }
         } catch (err) {
             console.log('this is error from createGroup, groupData', err);
@@ -63,8 +72,8 @@ const ChatController = () => {
 
     async function leaveChannel(req, res) {
         let channelName = req.body.channel_name;
-        // let userId = req.body.user_id;
-        let userId = req.get('userid');
+        let userId = req.body.user_id;
+        // let userId = req.get('userid');
 
         if (!userId) {
             return res.json(new responseObj('user_id not provided, BAD REQUEST', 400, false));
@@ -114,7 +123,7 @@ const ChatController = () => {
             }
             try {
                 channelUserContent = await channelUsersService.removeChannelUser(channeluser);
-                console.log('this is groupUserContent', channelUserContent);
+                // console.log('this is groupUserContent', channelUserContent);
             } catch (err) {
                 console.log('this is error from remove group user', err);
             }
@@ -129,8 +138,8 @@ const ChatController = () => {
 
     async function joinChannel(req, res) {
         let channelName = req.body.channel_name;
-        // let userId = req.body.user_id;
-        let userId = req.get('userid');
+        let userId = req.body.user_id;
+        // let userId = req.get('userid');
         console.log('this is userId', userId);
         if (!userId) {
             return res.json(new responseObj('user_id not provided, BAD REQUEST', 400, false));
@@ -154,7 +163,7 @@ const ChatController = () => {
             // console.log('this is channelContent', groupContent);
             if (channelContent[1]) {
                 try {
-                    let tempContent = await channelsService.findOrCreateGroup(channel);
+                    let tempContent = await channelsService.findOrCreateChannel(channel);
                     channelInfo = tempContent[0];
                 } catch (err) {
                     console.log('this is error form joinChannel, channelsService inner', err);
@@ -198,6 +207,7 @@ const ChatController = () => {
             }
         }
         if (channelUserInfo) {
+            channelUserInfo = Encrypter.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(channelUserInfo));
             return res.json(new responseObj('user join successfully', 200, true, channelUserInfo))
         } else {
             return res.json(new responseObj('INTERNAL SERVER ERROR', 500, false));
@@ -276,8 +286,9 @@ const ChatController = () => {
                 filelink: req.file.filename,
                 thumbnail: ((parseInt(messageInfo.message_type) === 3) ? req.file.filename.split('.')[0].toString() + ".jpg" : ""),
                 is_flagged: 0,
-                is_deleted: 0,
-                created_at: messageInfo.created_at
+                message_status: 0,
+                created_at: messageInfo.created_at,
+                updated_at: messageInfo.created_at
             }
             let messageContent = await messagesService.saveMessage(message);
             // console.log('this is messageContent', messageContent);

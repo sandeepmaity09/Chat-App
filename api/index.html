@@ -188,31 +188,27 @@
                 var curr_sec = d.getUTCSeconds();
                 var date = year + "-" + month + "-" + day + " " + curr_hour + ":" + curr_min + ":" + curr_sec;
 
-                // /*
+                /*
                 message.message = "" + $("#message").val();
                 message.parent_id = "" + $("#replymsgid").val();
-
                 message.chat_type = "KkHSASPgySB0xs1onT0MXw==:imOZU4UPt9Ga3rjqLiZQVw==";
                 message.user_id = channel.user_id;
                 message.channel_name = channel.channel_name;
-
+                message.is_edited = "g3+n2MuaCNG2keNPdyag1g==:+S5D1bLGh2oFaj42rlYafA==";
                 message.message_type = "k7UnTag9oQ/QKXVv7Yv1Fg==:dViOLMJxwj4ldHV0tmWBNQ==";
-
                 let formData1 = new FormData();
                 formData1.append('name', date.toString());
                 message.created_at = await fetch(FETCH_URL_ENCRYPT, {
                     method: 'POST',
                     body: formData1
                 }).then(res => res.json())
-
+                message.updated_at = message.created_at;
                 let formData2 = new FormData();
                 formData2.append('name', message.message);
                 message.message = await fetch(FETCH_URL_ENCRYPT, {
                     method: 'POST',
                     body: formData2
                 }).then(res => res.json())
-
-
                 if (parseInt(message.parent_id)) {
                     let formData3 = new FormData();
                     formData3.append('name', message.parent_id);
@@ -223,10 +219,43 @@
                 } else {
                     message.parent_id = "876GFUwvtUnGOY/D1dYYsg==:PGbkkihwJZKn+iloGUC0Gw==";
                 }
-
                 console.log('this is parent id', message.parent_id);
+                */
 
-                // */
+
+                // /*
+                message.chat_type = "KkHSASPgySB0xs1onT0MXw==:imOZU4UPt9Ga3rjqLiZQVw==";
+                message.message_type = "k7UnTag9oQ/QKXVv7Yv1Fg==:dViOLMJxwj4ldHV0tmWBNQ==";
+                message.channel_name = channel.channel_name;
+                message.message_id = "xxIro+wiZB73CYXDjcdoJA==:oVoEjNfE1Og15yYz+w17kQ==";
+                // message.parent_id = "" + $("#replymsgid").val();
+                message.user_id = channel.user_id;
+                message.is_edited = "0xJfSRa5LeLKD2Ejdz7o/A==:oMI3EkGN/IADGOSMOfB+7g==";
+                message.message = "" + $("#message").val();
+                let formData1 = new FormData();
+                formData1.append('name', date.toString());
+                message.updated_at = await fetch(FETCH_URL_ENCRYPT, {
+                    method: 'POST',
+                    body: formData1
+                }).then(res => res.json())
+                let formData2 = new FormData();
+                formData2.append('name', message.message);
+                message.message = await fetch(FETCH_URL_ENCRYPT, {
+                    method: 'POST',
+                    body: formData2
+                }).then(res => res.json())
+                if (parseInt(message.parent_id)) {
+                    let formData3 = new FormData();
+                    formData3.append('name', message.parent_id);
+                    message.parent_id = await fetch(FETCH_URL_ENCRYPT, {
+                        method: 'POST',
+                        body: formData3
+                    }).then(res => res.json())
+                } else {
+                    message.parent_id = "876GFUwvtUnGOY/D1dYYsg==:PGbkkihwJZKn+iloGUC0Gw==";
+                }
+                console.log('this is parent id', message.parent_id);
+                //  */
 
 
 

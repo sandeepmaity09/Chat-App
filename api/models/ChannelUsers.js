@@ -22,6 +22,10 @@ const ChannelUsers = sequlize.define('ChannelUsers', {
     created_at: {
         type: Sequlize.DATE,
         defaultValue: Sequlize.NOW
+    },
+    updated_at: {
+        type: Sequlize.DATE,
+        defaultValue: Sequlize.NOW
     }
 },
     {
