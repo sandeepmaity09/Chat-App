@@ -4,18 +4,6 @@ const getUTCDate = require('../../helpers/dateHelpers');
 
 const UserStatusService = () => {
 
-    // const getMessageById = (id) => {
-    //     return Message.find({ where: { message_id: id }, raw: true })
-    // }
-
-    // const saveMessage = (message) => {
-    //     return Message.create(message, { raw: true });
-    // }
-    // return {
-    //     getMessageById,
-    //     saveMessage
-    // }
-
     const findUserStatusByUserId = (userId) => {
         return UserStatus.findAll({ where: { user_id: userId }, raw: true });
     }

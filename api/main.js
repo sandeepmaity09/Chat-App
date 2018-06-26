@@ -115,6 +115,7 @@ const Encryptor = require('../api/helpers/aesHelpers');
  * Services 
  */
 const channelsService = require('../api/services/db/channels.service')();
+const userStatusService = require('../api/services/db/userStatus.service')();
 const CONSTANTS = require('../api/helpers/chatConstants');
 
 
@@ -460,7 +461,7 @@ io.on('connection', async function (socket) {
                         }
                         delete updatedMessageInfo.channel_id;
                         updatedMessageInfo.channel_name = channelInfo.channel_name;
-                        updatedMessageInfo.replyList ={};
+                        updatedMessageInfo.replyList = {};
                         try {
                             _.forEach(updatedMessageInfo, (item, key) => {
                                 if (typeof updatedMessageInfo[key] === 'object') {
@@ -802,6 +803,85 @@ io.on('connection', async function (socket) {
     })
 
 
+
+    socket.on('user status', async function (data) {
+        console.log('user status is called by ', socket.id);
+        let messageInfo;
+        try {
+            messageInfo = JSON.parse(data);
+        } catch (err) {
+            console.log("Parsing Error", err);
+        }
+        try {
+            _.forEach(messageInfo, (value, key) => {
+                messageInfo[key] = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, messageInfo[key]);
+            })
+        } catch (err) {
+            console.log("Parsing Error", err);
+        }
+
+        let userId = messageInfo.user_id;
+        let userStatus = messageInfo.user_status;
+
+        try {
+            let selectedMessageContent = await userStatusService.findUserStatusByUserId(userId);
+            console.log('this is insertedMessageContent', selectedMessageContent);
+            if (selectedMessageContent.length) {
+                // already exist
+                try {
+                    let updateUserStatusContent = await userStatusService.updateUserStatus(userId, userStatus);
+                    console.log(updateUserStatusContent);
+                    // if (updateUserStatusContent) {
+                    // return res.json(new responseObj("Successfully Updated", 200, true));
+
+                    _.forEach(updateUserStatusContent, (value, key) => {
+                        if (typeof updateUserStatusContent[key] === 'object') {
+                            updateUserStatusContent[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(updateUserStatusContent[key]));
+                        } else {
+                            updateUserStatusContent[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, updateUserStatusContent.toString());
+                        }
+                    })
+                    io.emit('user status', JSON.stringify({
+                        user_status: updateUserStatusContent
+                    }))
+                    // }
+                } catch (err) {
+                    console.log("Updation Error", err);
+                }
+            } else {
+                // new entry
+                try {
+                    userstatuobj = {
+                        user_id: userId,
+                        user_status: userStatus
+                    }
+                    let insertedMessageContent = await userStatusService.createUserStatus(userstatuobj);
+                    // console.log('this is insertedMessageContent', insertedMessageContent);
+                    if (insertedMessageContent) {
+                        // return res.json(new responseObj("Successfully Updated", 200, true));
+
+                        _.forEach(insertedMessageContent, (value, key) => {
+                            if (typeof insertedMessageContent[key] === 'object') {
+                                insertedMessageContent[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(insertedMessageContent[key]));
+                            } else {
+                                insertedMessageContent[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageContent[key].toString());
+                            }
+                        })
+                        io.emit('user status', JSON.stringify({
+                            user_status: insertedMessageContent
+                        }))
+                    }
+                } catch (err) {
+                    console.log("Insertation Error", err);
+                }
+            }
+        } catch (err) {
+            return res.json(new responseObj("Internal Server Error", 500, false));
+            console.log("Insertation Error", err);
+        }
+    })
+
+
     socket.on('delete message', async function (data) {
         console.log('delete message is called by ', socket.id);
         let messageInfo;
@@ -851,7 +931,13 @@ io.on('connection', async function (socket) {
             } catch (err) {
                 console.log("Database Selection Error", err);
             }
-
+            _.forEach(updatedMessageInfo, (value, key) => {
+                if (typeof updatedMessageInfo[key] === 'object') {
+                    updatedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(updatedMessageInfo[key]));
+                } else {
+                    updatedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, updatedMessageInfo[key].toString());
+                }
+            })
             io.in(channelInfo.channel_id).emit('delete', JSON.stringify({
                 message: updatedMessageInfo
             }));
