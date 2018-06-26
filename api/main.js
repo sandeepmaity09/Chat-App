@@ -391,7 +391,7 @@ io.on('connection', async function (socket) {
                         let replyMessageInfo;
                         try {
                             messageInfo.is_flagged = 0;
-                            messageInfo.message_status = 0;
+                            messageInfo.message_status = 1;
                             let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,filelink,thumbnail,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},"","",${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
                             insertedMessageId = insertedMessageContent;
                         } catch (err) {
@@ -483,7 +483,7 @@ io.on('connection', async function (socket) {
                         let insertedMessageInfo;
                         try {
                             messageInfo.is_flagged = 0;
-                            messageInfo.message_status = 0;
+                            messageInfo.message_status = 1;
                             let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,filelink,thumbnail,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},"","",${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
                             insertedMessageId = insertedMessageContent;
                         } catch (err) {
