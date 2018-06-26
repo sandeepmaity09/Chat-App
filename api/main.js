@@ -286,9 +286,6 @@ io.on('connection', async function (socket) {
 
     socket.on('send message', async function (data) {
         console.log("send message is called by socket id", socket.id);
-        // console.log("send message called by socket user", socket.id);
-        // console.log("socket user is connected to these rooms", socket.rooms);
-        // console.log("this is received payload from client", data);
 
         let messageInfo;
         try {
@@ -296,8 +293,6 @@ io.on('connection', async function (socket) {
         } catch (err) {
             console.log("Parsing Error", err);
         }
-
-        // console.log('this is messageInfo before parsing', messageInfo);
 
         try {
             _.forEach(messageInfo, (value, key) => {
@@ -311,15 +306,11 @@ io.on('connection', async function (socket) {
 
         let chatType = parseInt(messageInfo.chat_type);
         let messageType = parseInt(messageInfo.message_type);
-        // console.log(messageType);
-
 
         let channelInfo;
-        // console.log(messageInfo.channel_name);
         if (messageInfo.channel_name) {
             try {
                 channelInfo = await channelsService.findChannel({ channel_name: messageInfo.channel_name })
-                // console.log('this is channelInfo', channelInfo);
             } catch (err) {
                 console.log("Channel Fetching Error", err);
             }
@@ -376,7 +367,7 @@ io.on('connection', async function (socket) {
                         } catch (err) {
                             console.log("Database Selection Error", err);
                         }
-                        updatedMessageInfo.replyList = [replyMessageInfo];
+                        updatedMessageInfo.replyList = replyMessageInfo;
                         try {
                             _.forEach(updatedMessageInfo, (item, key) => {
                                 if (typeof updatedMessageInfo[key] === 'object') {
@@ -422,7 +413,7 @@ io.on('connection', async function (socket) {
                         } catch (err) {
                             console.log("Database Selection Error", err);
                         }
-                        insertedMessageInfo.replyList = [replyMessageInfo];
+                        insertedMessageInfo.replyList = replyMessageInfo;
                         try {
                             _.forEach(insertedMessageInfo, (item, key) => {
                                 if (typeof insertedMessageInfo[key] === 'object') {
@@ -469,7 +460,7 @@ io.on('connection', async function (socket) {
                         }
                         delete updatedMessageInfo.channel_id;
                         updatedMessageInfo.channel_name = channelInfo.channel_name;
-                        updatedMessageInfo.replyList = [];
+                        updatedMessageInfo.replyList ={};
                         try {
                             _.forEach(updatedMessageInfo, (item, key) => {
                                 if (typeof updatedMessageInfo[key] === 'object') {
@@ -508,7 +499,7 @@ io.on('connection', async function (socket) {
                         }
                         delete insertedMessageInfo.channel_id;
                         insertedMessageInfo.channel_name = channelInfo.channel_name;
-                        insertedMessageInfo.replyList = [];
+                        insertedMessageInfo.replyList = {};
 
                         try {
                             _.forEach(insertedMessageInfo, (item, key) => {
@@ -582,7 +573,7 @@ io.on('connection', async function (socket) {
 
                     delete multiMediaMessageInfo.channel_id;
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
-                    multiMediaMessageInfo.replyList = [];
+                    multiMediaMessageInfo.replyList = {};
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
@@ -651,7 +642,7 @@ io.on('connection', async function (socket) {
 
                     delete multiMediaMessageInfo.channel_id;
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
-                    multiMediaMessageInfo.replyList = [];
+                    multiMediaMessageInfo.replyList = {};
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
@@ -720,7 +711,7 @@ io.on('connection', async function (socket) {
 
                     delete multiMediaMessageInfo.channel_id;
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
-                    multiMediaMessageInfo.replyList = [];
+                    multiMediaMessageInfo.replyList = {};
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
@@ -788,7 +779,7 @@ io.on('connection', async function (socket) {
 
                     delete multiMediaMessageInfo.channel_id;
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
-                    multiMediaMessageInfo.replyList = [];
+                    multiMediaMessageInfo.replyList = {};
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
