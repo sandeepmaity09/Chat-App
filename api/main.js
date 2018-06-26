@@ -852,7 +852,7 @@ io.on('connection', async function (socket) {
                 console.log("Database Selection Error", err);
             }
 
-            io.on(channelInfo.channel_id).emit('delete', JSON.stringify({
+            io.in(channelInfo.channel_id).emit('delete', JSON.stringify({
                 message: updatedMessageInfo
             }));
             console.log('updated message', updatedMessageInfo);
