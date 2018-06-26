@@ -9,6 +9,7 @@ const Encrypter = require('../helpers/aesHelpers');
 const channelsService = require('../services/db/channels.service')();
 const channelUsersService = require('../services/db/channelUsers.service')();
 const messagesService = require('../services/db/messages.service')();
+const userStatusService = require('../services/db/userStatus.service')();
 
 let key = process.env.ENCRYPT_KEY;
 
@@ -322,6 +323,64 @@ const ChatController = () => {
     }
 
 
+    async function setUserStatus(req, res) {
+
+        let userId = req.body.user_id;
+        let userStatus = req.body.user_status;
+
+        if (!userId) {
+            return res.json(new responseObj('user_id not provided, BAD REQUEST', 400, false));
+        }
+
+        if (!userStatus) {
+            return res.json(new responseObj('user_status not provided, BAD REQUEST', 400, false));
+        }
+
+        try {
+            userId = Encrypter.aesDecryption(process.env.ENCRYPT_KEY, req.body.user_id);
+            userStatus = Encrypter.aesDecryption(process.env.ENCRYPT_KEY, req.body.user_status);
+        } catch (err) {
+            console.log("Decryption Error", err);
+            return res.json(new responseObj("Decryption Internal Error", 500, false));
+        }
+
+        try {
+            let selectedMessageContent = await userStatusService.findUserStatusByUserId(userId);
+            console.log('this is insertedMessageContent', selectedMessageContent);
+            if (selectedMessageContent.length) {
+                // already exist
+                try {
+                    let updateUserStatusContent = await userStatusService.updateUserStatus(userId, userStatus);
+                    console.log(updateUserStatusContent);
+                    // if (updateUserStatusContent) {
+                    return res.json(new responseObj("Successfully Updated", 200, true));
+                    // }
+                } catch (err) {
+                    console.log("Updation Error", err);
+                }
+            } else {
+                // new entry
+                try {
+                    userstatuobj = {
+                        user_id: userId,
+                        user_status: userStatus
+                    }
+                    let insertedMessageContent = await userStatusService.createUserStatus(userstatuobj);
+                    // console.log('this is insertedMessageContent', insertedMessageContent);
+                    if (insertedMessageContent) {
+                        return res.json(new responseObj("Successfully Updated", 200, true));
+                    }
+                } catch (err) {
+                    console.log("Insertation Error", err);
+                }
+            }
+        } catch (err) {
+            return res.json(new responseObj("Internal Server Error", 500, false));
+            console.log("Insertation Error", err);
+        }
+    }
+
+
     return {
         createChannel,
         joinChannel,
@@ -329,7 +388,8 @@ const ChatController = () => {
         chatHistory,
         chatInsert,
         aesEncryptor,
-        aesDecryptor
+        aesDecryptor,
+        setUserStatus
     }
 }
 

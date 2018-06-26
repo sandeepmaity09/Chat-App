@@ -17,7 +17,7 @@ const UserStatus = sequlize.define('UserStatus', {
         type: Sequlize.INTEGER(2)
     },
     userstatus_status: {
-        type: Sequlize.TINYINT(2)
+        type: Sequlize.INTEGER(2)
     },
     created_at: {
         type: Sequlize.DATE,

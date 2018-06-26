@@ -129,12 +129,6 @@ app.get('/', function (req, res) {
 
 io.on('connection', async function (socket) {
     console.log('A new user connected', socket.id);
-    // io.emit('connect', JSON.stringify({
-    //     socketID: socket.id
-    // }))
-    // socket.emit('connection', JSON.stringify({
-    //     socketID: socket.id
-    // }))
     socket.send(JSON.stringify({
         socketID: socket.id,
         channelID: io.sockets.adapter.sids[socket.id]
@@ -340,151 +334,6 @@ io.on('connection', async function (socket) {
         if (chatType) {
             // ONE To ONE Chat
             console.log('ONE TO ONE CHAT');
-            if (messageType === 0) {
-                console.log("TEXT MESSAGE");
-                let isReply = parseInt(messageInfo.parent_id);
-                if (isReply) {
-                    console.log("This is Reply");
-                    let insertedMessageId;
-                    let insertedMessageInfo;
-                    if (messageInfo.is_edited === 0) {
-                        try {
-                            messageInfo.is_edited = 0;
-                            messageInfo.is_flagged = 0;
-                            messageInfo.message_status = 0;
-                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
-                            insertedMessageId = insertedMessageContent;
-                        } catch (err) {
-                            console.log("Insertation Error", err);
-                        }
-
-                        try {
-                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
-                            if (insertedMessageContent.length) {
-                                insertedMessageInfo = insertedMessageContent[0];
-                            }
-                        } catch (err) {
-                            console.log("Selection Error", err);
-                        }
-                        delete insertedMessageInfo.channel_id;
-                        insertedMessageInfo.channel_name = channelInfo.channel_name;
-
-                        try {
-                            _.forEach(insertedMessageInfo, (item, key) => {
-                                if (item !== null) {
-                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(insertedMessageInfo[key]));
-                                } else {
-                                    delete insertedMessageInfo[key];
-                                }
-                            })
-                            console.log("this is insertedMessageInfo", insertedMessageInfo);
-                        } catch (err) {
-                            console.log("Encryption Error", err);
-                        }
-
-                        console.log('Message send to ', channelInfo.channel_id);
-
-                        setTimeout(function () {
-                            io.in(channelInfo.channel_id).emit('send', {
-                                message: insertedMessageInfo
-                            })
-                        })
-                    } else {
-                        try {
-                            messageInfo.is_edited = 0;
-                            messageInfo.is_flagged = 0;
-                            messageInfo.message_status = 0;
-                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
-                            insertedMessageId = insertedMessageContent;
-                        } catch (err) {
-                            console.log("Insertation Error", err);
-                        }
-
-                        try {
-                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
-                            if (insertedMessageContent.length) {
-                                insertedMessageInfo = insertedMessageContent[0];
-                            }
-                        } catch (err) {
-                            console.log("Selection Error", err);
-                        }
-                        delete insertedMessageInfo.channel_id;
-                        insertedMessageInfo.channel_name = channelInfo.channel_name;
-
-                        try {
-                            _.forEach(insertedMessageInfo, (item, key) => {
-                                if (item !== null) {
-                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(insertedMessageInfo[key]));
-                                } else {
-                                    delete insertedMessageInfo[key];
-                                }
-                            })
-                            console.log("this is insertedMessageInfo", insertedMessageInfo);
-                        } catch (err) {
-                            console.log("Encryption Error", err);
-                        }
-
-                        console.log('Message send to ', channelInfo.channel_id);
-
-                        setTimeout(function () {
-                            io.in(channelInfo.channel_id).emit('send', {
-                                message: insertedMessageInfo
-                            })
-                        })
-                    }
-                } else {
-                    console.log("This is Just Text Message");
-                    let insertedMessageId;
-                    let insertedMessageInfo;
-                    try {
-                        messageInfo.is_flagged = 0;
-                        messageInfo.is_deleted = 0;
-                        let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_flagged,is_deleted,created_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.is_deleted)},"${messageInfo.created_at}")`, { type: sequelize.QueryTypes.INSERT })
-                        insertedMessageId = insertedMessageContent;
-                    } catch (err) {
-                        console.log("Insertation Error", err);
-                    }
-                    try {
-                        let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
-                        if (insertedMessageContent.length) {
-                            insertedMessageInfo = insertedMessageContent[0];
-                        }
-                    } catch (err) {
-                        console.log("Selection Error", err);
-                    }
-                    delete insertedMessageInfo.channel_id;
-                    insertedMessageInfo.channel_name = channelInfo.channel_name;
-
-                    try {
-                        _.forEach(insertedMessageInfo, (item, key) => {
-                            if (item !== null) {
-                                insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(insertedMessageInfo[key]));
-                            } else {
-                                delete insertedMessageInfo[key];
-                            }
-                        })
-                        console.log("this is insertedMessageInfo", insertedMessageInfo);
-                    } catch (err) {
-                        console.log("Encryption Error", err);
-                    }
-
-                    console.log('Message send to ', channelInfo.channel_id);
-
-                    setTimeout(function () {
-                        io.in(channelInfo.channel_id).emit('send', {
-                            message: insertedMessageInfo
-                        })
-                    })
-                }
-            } else if (messageType === 1) {
-                console.log("Image Message");
-            } else if (messageType === 2) {
-                console.log("Audio Message");
-            } else if (messageType === 3) {
-                console.log("Video Message");
-            } else if (messageType === 4) {
-                console.log("Docs Message");
-            }
         } else {
             // Group Chat
             console.log('GROUP CHAT');
@@ -530,10 +379,10 @@ io.on('connection', async function (socket) {
                         updatedMessageInfo.replyList = [replyMessageInfo];
                         try {
                             _.forEach(updatedMessageInfo, (item, key) => {
-                                if (item !== null) {
+                                if (typeof updatedMessageInfo[key] === 'object') {
                                     updatedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(updatedMessageInfo[key]));
                                 } else {
-                                    delete updatedMessageInfo[key];
+                                    updatedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, updatedMessageInfo[key].toString());
                                 }
                             })
                             console.log("this is insertedMessageInfo", updatedMessageInfo);
@@ -541,9 +390,9 @@ io.on('connection', async function (socket) {
                             console.log("Encryption Error", err);
                         }
                         setTimeout(function () {
-                            io.in(channelInfo.channel_id).emit('send', {
+                            io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                                 message: updatedMessageInfo
-                            })
+                            }))
                         })
                     } else {
                         let insertedMessageId;
@@ -576,10 +425,10 @@ io.on('connection', async function (socket) {
                         insertedMessageInfo.replyList = [replyMessageInfo];
                         try {
                             _.forEach(insertedMessageInfo, (item, key) => {
-                                if (item !== null) {
+                                if (typeof insertedMessageInfo[key] === 'object') {
                                     insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(insertedMessageInfo[key]));
                                 } else {
-                                    delete insertedMessageInfo[key];
+                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
                                 }
                             })
                             console.log("this is insertedMessageInfo", insertedMessageInfo);
@@ -587,9 +436,9 @@ io.on('connection', async function (socket) {
                             console.log("Encryption Error", err);
                         }
                         setTimeout(function () {
-                            io.in(channelInfo.channel_id).emit('send', {
+                            io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                                 message: insertedMessageInfo
-                            })
+                            }))
                         })
                     }
                 } else {
@@ -623,10 +472,10 @@ io.on('connection', async function (socket) {
                         updatedMessageInfo.replyList = [];
                         try {
                             _.forEach(updatedMessageInfo, (item, key) => {
-                                if (item !== null) {
+                                if (typeof updatedMessageInfo[key] === 'object') {
                                     updatedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(updatedMessageInfo[key]));
                                 } else {
-                                    delete updatedMessageInfo[key];
+                                    updatedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, updatedMessageInfo[key].toString());
                                 }
                             })
                             console.log("this is insertedMessageInfo", updatedMessageInfo);
@@ -634,9 +483,9 @@ io.on('connection', async function (socket) {
                             console.log("Encryption Error", err);
                         }
                         setTimeout(function () {
-                            io.in(channelInfo.channel_id).emit('send', {
+                            io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                                 message: updatedMessageInfo
-                            })
+                            }))
                         })
                     } else {
                         let insertedMessageId;
@@ -663,10 +512,10 @@ io.on('connection', async function (socket) {
 
                         try {
                             _.forEach(insertedMessageInfo, (item, key) => {
-                                if (item !== null) {
+                                if (typeof insertedMessageInfo[key] === 'object') {
                                     insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(insertedMessageInfo[key]));
                                 } else {
-                                    delete insertedMessageInfo[key];
+                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
                                 }
                             })
                             console.log("this is insertedMessageInfo", insertedMessageInfo);
@@ -674,9 +523,9 @@ io.on('connection', async function (socket) {
                             console.log("Encryption Error", err);
                         }
                         setTimeout(function () {
-                            io.in(channelInfo.channel_id).emit('send', {
+                            io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                                 message: insertedMessageInfo
-                            })
+                            }))
                         })
                     }
                 }
@@ -708,12 +557,16 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = replyMessageInfo;
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
-                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        if (typeof multiMediaMessageInfo[key] === 'object') {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        } else {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, multiMediaMessageInfo[key].toString());
+                        }
                     })
 
-                    io.in(channelInfo.channel_id).emit('send', {
+                    io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                         message: multiMediaMessageInfo
-                    })
+                    }));
 
                 } else {
                     console.log('Image Message');
@@ -732,14 +585,18 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = [];
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
-                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        if (typeof multiMediaMessageInfo[key] === 'object') {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        } else {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, multiMediaMessageInfo[key].toString());
+                        }
                     })
 
                     console.log('this is multimediamessage', multiMediaMessageInfo);
 
-                    io.in(channelInfo.channel_id).emit('send', {
+                    io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                         message: multiMediaMessageInfo
-                    })
+                    }))
                 }
             } else if (messageType === CONSTANTS.MSG_TYPE_AUDIO) {
                 console.log("Audio Message");
@@ -769,12 +626,16 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = replyMessageInfo;
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
-                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        if (typeof multiMediaMessageInfo[key] === 'object') {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        } else {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, multiMediaMessageInfo[key].toString());
+                        }
                     })
 
-                    io.in(channelInfo.channel_id).emit('send', {
+                    io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                         message: multiMediaMessageInfo
-                    })
+                    }));
 
                 } else {
                     console.log('Image Message');
@@ -793,14 +654,18 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = [];
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
-                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        if (typeof multiMediaMessageInfo[key] === 'object') {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        } else {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, multiMediaMessageInfo[key].toString());
+                        }
                     })
 
                     console.log('this is multimediamessage', multiMediaMessageInfo);
 
-                    io.in(channelInfo.channel_id).emit('send', {
+                    io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                         message: multiMediaMessageInfo
-                    })
+                    }))
                 }
             } else if (messageType === CONSTANTS.MSG_TYPE_VIDEO) {
                 console.log("Video Message");
@@ -830,12 +695,16 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = replyMessageInfo;
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
-                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        if (typeof multiMediaMessageInfo[key] === 'object') {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        } else {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, multiMediaMessageInfo[key].toString());
+                        }
                     })
 
-                    io.in(channelInfo.channel_id).emit('send', {
+                    io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                         message: multiMediaMessageInfo
-                    })
+                    }))
 
                 } else {
                     console.log('Image Message');
@@ -854,14 +723,18 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = [];
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
-                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        if (typeof multiMediaMessageInfo[key] === 'object') {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        } else {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, multiMediaMessageInfo[key].toString());
+                        }
                     })
 
                     console.log('this is multimediamessage', multiMediaMessageInfo);
 
-                    io.in(channelInfo.channel_id).emit('send', {
+                    io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                         message: multiMediaMessageInfo
-                    })
+                    }));
                 }
             } else if (messageType === CONSTANTS.MSG_TYPE_DOCS) {
                 let isReply = parseInt(messageInfo.parent_id);
@@ -890,12 +763,16 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = replyMessageInfo;
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
-                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        if (typeof multiMediaMessageInfo[key] === 'object') {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        } else {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, multiMediaMessageInfo[key].toString());
+                        }
                     })
 
-                    io.in(channelInfo.channel_id).emit('send', {
+                    io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                         message: multiMediaMessageInfo
-                    })
+                    }));
 
                 } else {
                     console.log('Image Message');
@@ -914,19 +791,81 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = [];
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
-                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        if (typeof multiMediaMessageInfo[key] === 'object') {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
+                        } else {
+                            multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, multiMediaMessageInfo[key].toString());
+                        }
                     })
 
                     console.log('this is multimediamessage', multiMediaMessageInfo);
 
-                    io.in(channelInfo.channel_id).emit('send', {
+                    io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                         message: multiMediaMessageInfo
-                    })
+                    }));
                 }
             }
         }
 
 
+    })
+
+
+    socket.on('delete message', async function (data) {
+        console.log('delete message is called by ', socket.id);
+        let messageInfo;
+        let updatedMessageInfo;
+        try {
+            messageInfo = JSON.parse(data);
+        } catch (err) {
+            console.log("Parsing Error", err);
+        }
+        try {
+            _.forEach(messageInfo, (value, key) => {
+                messageInfo[key] = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, messageInfo[key]);
+            })
+        } catch (err) {
+            console.log("Decryption Error", err);
+        }
+        let channelInfo;
+        if (messageInfo.channel_name) {
+            try {
+                channelInfo = await channelsService.findChannel({ channel_name: messageInfo.channel_name })
+                // console.log('this is channelInfo', channelInfo);
+            } catch (err) {
+                console.log("Channel Fetching Error", err);
+            }
+        } else {
+            try {
+                channelInfo = await channelsService.findChannelById(parseInt(messageInfo.channel_id));
+            } catch (err) {
+                console.log("Channel Fetching Error", err);
+            }
+        }
+        try {
+            let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+            messageInfo = messageContent[0];
+        } catch (err) {
+            console.log("this is error ", err);
+        }
+        if (parseInt(messageInfo.user_id) === parseInt(messageInfo.user_id)) {
+            try {
+                let deleteMessageContent = await sequelize.query(`UPDATE chat_messages SET message_status = 0 WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.DELETE });
+            } catch (err) {
+                console.log("Database Updation Error", err);
+            }
+            try {
+                let updatedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                updatedMessageInfo = updatedMessageContent[0];
+            } catch (err) {
+                console.log("Database Selection Error", err);
+            }
+
+            io.on(channelInfo.channel_id).emit('delete', JSON.stringify({
+                message: updatedMessageInfo
+            }));
+            console.log('updated message', updatedMessageInfo);
+        }
     })
 
     socket.on('show clients', function () {
