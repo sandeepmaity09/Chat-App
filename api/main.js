@@ -372,7 +372,7 @@ io.on('connection', async function (socket) {
                         try {
                             _.forEach(insertedMessageInfo, (item, key) => {
                                 if (item !== null) {
-                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(insertedMessageInfo[key]));
                                 } else {
                                     delete insertedMessageInfo[key];
                                 }
@@ -414,7 +414,7 @@ io.on('connection', async function (socket) {
                         try {
                             _.forEach(insertedMessageInfo, (item, key) => {
                                 if (item !== null) {
-                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(insertedMessageInfo[key]));
                                 } else {
                                     delete insertedMessageInfo[key];
                                 }
@@ -458,7 +458,7 @@ io.on('connection', async function (socket) {
                     try {
                         _.forEach(insertedMessageInfo, (item, key) => {
                             if (item !== null) {
-                                insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                                insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(insertedMessageInfo[key]));
                             } else {
                                 delete insertedMessageInfo[key];
                             }
@@ -494,63 +494,69 @@ io.on('connection', async function (socket) {
                 if (isReply) {
                     // Reply Message
                     console.log("This is Reply");
-                    let insertedMessageId;
-                    let insertedMessageInfo;
                     if (parseInt(messageInfo.is_edited)) {
-                        // Edited Message
+                        // Edited
+                        let insertedMessageInfo;
+                        let updatedMessageInfo;
+                        let replyMessageInfo;
                         try {
-                            messageInfo.is_edited = 1;
-                            messageInfo.is_flagged = 0;
-                            messageInfo.message_status = 0;
-                            // let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
-                            insertedMessageId = insertedMessageContent;
+                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            insertedMessageInfo = insertedMessageContent[0];
                         } catch (err) {
                             console.log("Insertation Error", err);
                         }
 
                         try {
-                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
-                            if (insertedMessageContent.length) {
-                                insertedMessageInfo = insertedMessageContent[0];
-                            }
+                            let updatedMessageContent = await sequelize.query(`UPDATE chat_messages SET message="${messageInfo.message}",is_edited=${parseInt(messageInfo.is_edited)},updated_at="${messageInfo.updated_at}" WHERE message_id=${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
                         } catch (err) {
-                            console.log("Selection Error", err);
+                            console.log("Updateion Error", err);
                         }
-                        delete insertedMessageInfo.channel_id;
-                        insertedMessageInfo.channel_name = channelInfo.channel_name;
 
                         try {
-                            _.forEach(insertedMessageInfo, (item, key) => {
+                            let updatedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            updatedMessageInfo = updatedMessageContent[0];
+                        } catch (err) {
+                            console.log("Insertation Error", err);
+                        }
+                        delete updatedMessageInfo.channel_id;
+                        updatedMessageInfo.channel_name = channelInfo.channel_name;
+
+                        try {
+                            let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            replyMessageInfo = replyMessageContent[0];
+                        } catch (err) {
+                            console.log("Database Selection Error", err);
+                        }
+                        updatedMessageInfo.replyList = [replyMessageInfo];
+                        try {
+                            _.forEach(updatedMessageInfo, (item, key) => {
                                 if (item !== null) {
-                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                                    updatedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(updatedMessageInfo[key]));
                                 } else {
-                                    delete insertedMessageInfo[key];
+                                    delete updatedMessageInfo[key];
                                 }
                             })
-                            console.log("this is insertedMessageInfo", insertedMessageInfo);
+                            console.log("this is insertedMessageInfo", updatedMessageInfo);
                         } catch (err) {
                             console.log("Encryption Error", err);
                         }
-
-                        console.log('Message send to ', channelInfo.channel_id);
-
                         setTimeout(function () {
                             io.in(channelInfo.channel_id).emit('send', {
-                                message: insertedMessageInfo
+                                message: updatedMessageInfo
                             })
                         })
                     } else {
-                        // New message
+                        let insertedMessageId;
+                        let insertedMessageInfo;
+                        let replyMessageInfo;
                         try {
-                            messageInfo.is_edited = 0;
                             messageInfo.is_flagged = 0;
                             messageInfo.message_status = 0;
-                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
+                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,filelink,thumbnail,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},"","",${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
                             insertedMessageId = insertedMessageContent;
                         } catch (err) {
                             console.log("Insertation Error", err);
                         }
-
                         try {
                             let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
                             if (insertedMessageContent.length) {
@@ -561,11 +567,17 @@ io.on('connection', async function (socket) {
                         }
                         delete insertedMessageInfo.channel_id;
                         insertedMessageInfo.channel_name = channelInfo.channel_name;
-
+                        try {
+                            let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            replyMessageInfo = replyMessageContent[0];
+                        } catch (err) {
+                            console.log("Database Selection Error", err);
+                        }
+                        insertedMessageInfo.replyList = [replyMessageInfo];
                         try {
                             _.forEach(insertedMessageInfo, (item, key) => {
                                 if (item !== null) {
-                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(insertedMessageInfo[key]));
                                 } else {
                                     delete insertedMessageInfo[key];
                                 }
@@ -574,55 +586,12 @@ io.on('connection', async function (socket) {
                         } catch (err) {
                             console.log("Encryption Error", err);
                         }
-
-                        console.log('Message send to ', channelInfo.channel_id);
-
                         setTimeout(function () {
                             io.in(channelInfo.channel_id).emit('send', {
                                 message: insertedMessageInfo
                             })
                         })
                     }
-                    // try {
-                    //     messageInfo.is_flagged = 0;
-                    //     messageInfo.is_deleted = 0;
-                    //     let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_flagged,is_deleted,created_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.is_deleted)},"${messageInfo.created_at}")`, { type: sequelize.QueryTypes.INSERT })
-                    //     insertedMessageId = insertedMessageContent;
-                    // } catch (err) {
-                    //     console.log("Insertation Error", err);
-                    // }
-
-                    // try {
-                    //     let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
-                    //     if (insertedMessageContent.length) {
-                    //         insertedMessageInfo = insertedMessageContent[0];
-                    //     }
-                    // } catch (err) {
-                    //     console.log("Selection Error", err);
-                    // }
-                    // delete insertedMessageInfo.channel_id;
-                    // insertedMessageInfo.channel_name = channelInfo.channel_name;
-
-                    // try {
-                    //     _.forEach(insertedMessageInfo, (item, key) => {
-                    //         if (item !== null) {
-                    //             insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
-                    //         } else {
-                    //             delete insertedMessageInfo[key];
-                    //         }
-                    //     })
-                    //     console.log("this is insertedMessageInfo", insertedMessageInfo);
-                    // } catch (err) {
-                    //     console.log("Encryption Error", err);
-                    // }
-
-                    // console.log('Message send to ', channelInfo.channel_id);
-
-                    // setTimeout(function () {
-                    //     io.in(channelInfo.channel_id).emit('send', {
-                    //         message: insertedMessageInfo
-                    //     })
-                    // })
                 } else {
                     // Original Text Message
                     console.log("This is Just Text Message");
@@ -632,7 +601,6 @@ io.on('connection', async function (socket) {
                         let updatedMessageInfo;
                         try {
                             let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
-                            // console.log('this is insertedMessageContent', insertedMessageContent);
                             insertedMessageInfo = insertedMessageContent[0];
                         } catch (err) {
                             console.log("Insertation Error", err);
@@ -640,20 +608,19 @@ io.on('connection', async function (socket) {
 
                         try {
                             let updatedMessageContent = await sequelize.query(`UPDATE chat_messages SET message="${messageInfo.message}",is_edited=${parseInt(messageInfo.is_edited)},updated_at="${messageInfo.updated_at}" WHERE message_id=${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
-                            // console.log('this is updatedMessageContent', updatedMessageContent);
                         } catch (err) {
                             console.log("Updateion Error", err);
                         }
 
                         try {
                             let updatedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
-                            console.log('this is updatedMessageContent', updatedMessageContent);
                             updatedMessageInfo = updatedMessageContent[0];
                         } catch (err) {
                             console.log("Insertation Error", err);
                         }
                         delete updatedMessageInfo.channel_id;
                         updatedMessageInfo.channel_name = channelInfo.channel_name;
+                        updatedMessageInfo.replyList = [];
                         try {
                             _.forEach(updatedMessageInfo, (item, key) => {
                                 if (item !== null) {
@@ -677,9 +644,7 @@ io.on('connection', async function (socket) {
                         try {
                             messageInfo.is_flagged = 0;
                             messageInfo.message_status = 0;
-                            // let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_flagged,is_deleted,created_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.is_deleted)},"${messageInfo.created_at}")`, { type: sequelize.QueryTypes.INSERT })
-                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
-                            // console.log('this is id of insertedMessageContent', insertedMessageContent);
+                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,filelink,thumbnail,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},"","",${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
                             insertedMessageId = insertedMessageContent;
                         } catch (err) {
                             console.log("Insertation Error", err);
@@ -688,18 +653,18 @@ io.on('connection', async function (socket) {
                             let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
                             if (insertedMessageContent.length) {
                                 insertedMessageInfo = insertedMessageContent[0];
-                                // console.log('this is insertedMessageInfo', insertedMessageInfo);
                             }
                         } catch (err) {
                             console.log("Selection Error", err);
                         }
                         delete insertedMessageInfo.channel_id;
                         insertedMessageInfo.channel_name = channelInfo.channel_name;
+                        insertedMessageInfo.replyList = [];
 
                         try {
                             _.forEach(insertedMessageInfo, (item, key) => {
                                 if (item !== null) {
-                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
+                                    insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(insertedMessageInfo[key]));
                                 } else {
                                     delete insertedMessageInfo[key];
                                 }
@@ -720,88 +685,243 @@ io.on('connection', async function (socket) {
                 let isReply = parseInt(messageInfo.parent_id);
                 if (isReply) {
                     console.log('Image Reply Message');
-                    console.log(messageInfo);
-                    _.forEach(messageInfo, (value, key) => {
-                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    let multiMediaMessageInfo;
+                    let replyMessageInfo;
+
+                    try {
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        multiMediaMessageInfo = messageContent[0];
+                    } catch (err) {
+                        console.log("Database Selection Error", err);
+                    }
+
+                    try {
+                        let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        console.log("this is replyMessageContent", replyMessageContent);
+                        replyMessageInfo = replyMessageContent[0];
+                    } catch (err) {
+                        console.log("Database Selection Error", err);
+                    }
+
+                    delete multiMediaMessageInfo.channel_id;
+                    multiMediaMessageInfo.channel_name = channelInfo.channel_name;
+                    multiMediaMessageInfo.replyList = replyMessageInfo;
+
+                    _.forEach(multiMediaMessageInfo, (value, key) => {
+                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
                     })
+
                     io.in(channelInfo.channel_id).emit('send', {
-                        message: messageInfo
-                    });
+                        message: multiMediaMessageInfo
+                    })
+
                 } else {
                     console.log('Image Message');
                     console.log(messageInfo);
-                    _.forEach(messageInfo, (value, key) => {
-                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    let multiMediaMessageInfo;
+                    try {
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        multiMediaMessageInfo = messageContent[0];
+                    } catch (err) {
+                        console.log("Database Selection Error", err);
+                    }
+
+
+                    delete multiMediaMessageInfo.channel_id;
+                    multiMediaMessageInfo.channel_name = channelInfo.channel_name;
+                    multiMediaMessageInfo.replyList = [];
+
+                    _.forEach(multiMediaMessageInfo, (value, key) => {
+                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
                     })
+
+                    console.log('this is multimediamessage', multiMediaMessageInfo);
+
                     io.in(channelInfo.channel_id).emit('send', {
-                        message: messageInfo
-                    });
+                        message: multiMediaMessageInfo
+                    })
                 }
             } else if (messageType === CONSTANTS.MSG_TYPE_AUDIO) {
                 console.log("Audio Message");
                 let isReply = parseInt(messageInfo.parent_id);
                 if (isReply) {
-                    console.log("Audio Reply Message");
-                    console.log(messageInfo);
-                    _.forEach(messageInfo, (value, key) => {
-                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    console.log('Image Reply Message');
+                    let multiMediaMessageInfo;
+                    let replyMessageInfo;
+
+                    try {
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        multiMediaMessageInfo = messageContent[0];
+                    } catch (err) {
+                        console.log("Database Selection Error", err);
+                    }
+
+                    try {
+                        let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        console.log("this is replyMessageContent", replyMessageContent);
+                        replyMessageInfo = replyMessageContent[0];
+                    } catch (err) {
+                        console.log("Database Selection Error", err);
+                    }
+
+                    delete multiMediaMessageInfo.channel_id;
+                    multiMediaMessageInfo.channel_name = channelInfo.channel_name;
+                    multiMediaMessageInfo.replyList = replyMessageInfo;
+
+                    _.forEach(multiMediaMessageInfo, (value, key) => {
+                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
                     })
+
                     io.in(channelInfo.channel_id).emit('send', {
-                        message: messageInfo
-                    });
+                        message: multiMediaMessageInfo
+                    })
+
                 } else {
-                    console.log("Audio Message");
+                    console.log('Image Message');
                     console.log(messageInfo);
-                    _.forEach(messageInfo, (value, key) => {
-                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    let multiMediaMessageInfo;
+                    try {
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        multiMediaMessageInfo = messageContent[0];
+                    } catch (err) {
+                        console.log("Database Selection Error", err);
+                    }
+
+
+                    delete multiMediaMessageInfo.channel_id;
+                    multiMediaMessageInfo.channel_name = channelInfo.channel_name;
+                    multiMediaMessageInfo.replyList = [];
+
+                    _.forEach(multiMediaMessageInfo, (value, key) => {
+                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
                     })
+
+                    console.log('this is multimediamessage', multiMediaMessageInfo);
+
                     io.in(channelInfo.channel_id).emit('send', {
-                        message: messageInfo
-                    });
+                        message: multiMediaMessageInfo
+                    })
                 }
             } else if (messageType === CONSTANTS.MSG_TYPE_VIDEO) {
                 console.log("Video Message");
                 let isReply = parseInt(messageInfo.parent_id);
                 if (isReply) {
-                    console.log("Video Reply Message");
-                    console.log(messageInfo);
-                    _.forEach(messageInfo, (value, key) => {
-                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    console.log('Image Reply Message');
+                    let multiMediaMessageInfo;
+                    let replyMessageInfo;
+
+                    try {
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        multiMediaMessageInfo = messageContent[0];
+                    } catch (err) {
+                        console.log("Database Selection Error", err);
+                    }
+
+                    try {
+                        let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        console.log("this is replyMessageContent", replyMessageContent);
+                        replyMessageInfo = replyMessageContent[0];
+                    } catch (err) {
+                        console.log("Database Selection Error", err);
+                    }
+
+                    delete multiMediaMessageInfo.channel_id;
+                    multiMediaMessageInfo.channel_name = channelInfo.channel_name;
+                    multiMediaMessageInfo.replyList = replyMessageInfo;
+
+                    _.forEach(multiMediaMessageInfo, (value, key) => {
+                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
                     })
+
                     io.in(channelInfo.channel_id).emit('send', {
-                        message: messageInfo
-                    });
+                        message: multiMediaMessageInfo
+                    })
+
                 } else {
-                    console.log("Video Message");
+                    console.log('Image Message');
                     console.log(messageInfo);
-                    _.forEach(messageInfo, (value, key) => {
-                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    let multiMediaMessageInfo;
+                    try {
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        multiMediaMessageInfo = messageContent[0];
+                    } catch (err) {
+                        console.log("Database Selection Error", err);
+                    }
+
+
+                    delete multiMediaMessageInfo.channel_id;
+                    multiMediaMessageInfo.channel_name = channelInfo.channel_name;
+                    multiMediaMessageInfo.replyList = [];
+
+                    _.forEach(multiMediaMessageInfo, (value, key) => {
+                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
                     })
+
+                    console.log('this is multimediamessage', multiMediaMessageInfo);
+
                     io.in(channelInfo.channel_id).emit('send', {
-                        message: messageInfo
-                    });
+                        message: multiMediaMessageInfo
+                    })
                 }
             } else if (messageType === CONSTANTS.MSG_TYPE_DOCS) {
-                console.log("Docs Message");
                 let isReply = parseInt(messageInfo.parent_id);
                 if (isReply) {
-                    console.log("Docs Reply Message");
-                    console.log(messageInfo);
-                    _.forEach(messageInfo, (value, key) => {
-                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    console.log('Image Reply Message');
+                    let multiMediaMessageInfo;
+                    let replyMessageInfo;
+
+                    try {
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        multiMediaMessageInfo = messageContent[0];
+                    } catch (err) {
+                        console.log("Database Selection Error", err);
+                    }
+
+                    try {
+                        let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        console.log("this is replyMessageContent", replyMessageContent);
+                        replyMessageInfo = replyMessageContent[0];
+                    } catch (err) {
+                        console.log("Database Selection Error", err);
+                    }
+
+                    delete multiMediaMessageInfo.channel_id;
+                    multiMediaMessageInfo.channel_name = channelInfo.channel_name;
+                    multiMediaMessageInfo.replyList = replyMessageInfo;
+
+                    _.forEach(multiMediaMessageInfo, (value, key) => {
+                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
                     })
+
                     io.in(channelInfo.channel_id).emit('send', {
-                        message: messageInfo
-                    });
+                        message: multiMediaMessageInfo
+                    })
+
                 } else {
-                    console.log("Docs Message");
+                    console.log('Image Message');
                     console.log(messageInfo);
-                    _.forEach(messageInfo, (value, key) => {
-                        messageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
+                    let multiMediaMessageInfo;
+                    try {
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        multiMediaMessageInfo = messageContent[0];
+                    } catch (err) {
+                        console.log("Database Selection Error", err);
+                    }
+
+
+                    delete multiMediaMessageInfo.channel_id;
+                    multiMediaMessageInfo.channel_name = channelInfo.channel_name;
+                    multiMediaMessageInfo.replyList = [];
+
+                    _.forEach(multiMediaMessageInfo, (value, key) => {
+                        multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
                     })
+
+                    console.log('this is multimediamessage', multiMediaMessageInfo);
+
                     io.in(channelInfo.channel_id).emit('send', {
-                        message: messageInfo
-                    });
+                        message: multiMediaMessageInfo
+                    })
                 }
             }
         }
