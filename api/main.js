@@ -724,7 +724,7 @@ io.on('connection', async function (socket) {
                         } else {
                             // unread not exist
                             try {
-                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)},${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
+                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)},${parseInt(multiMediaMessageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                             } catch (err) {
                                 console.log("Insertation Error", err);
                             }
