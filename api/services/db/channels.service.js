@@ -1,4 +1,7 @@
 const Channel = require('../../models/Channel');
+const sequlize = require('../../../config/database');
+const getUTCDate = require('../../helpers/dateHelpers');
+
 
 const ChannelsService = () => {
 
@@ -19,12 +22,17 @@ const ChannelsService = () => {
         return Channel.find({ where: { channel_id: id }, raw: true })
     }
 
+    const updateChannelById = (id) => {
+        return sequlize.query(`UPDATE chat_channels SET channel_status = 0, updated_at = "${getUTCDate()}" WHERE channel_id = ${parseInt(id)}`, { type: sequlize.QueryTypes.UPDATE });
+    }
+
 
     return {
         createChannel,
         findOrCreateChannel,
         findChannel,
-        findChannelById
+        findChannelById,
+        updateChannelById
     }
 }
 

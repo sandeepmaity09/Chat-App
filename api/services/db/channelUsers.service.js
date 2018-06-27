@@ -14,10 +14,15 @@ const ChannelUsersService = () => {
         return ChannelUsers.destroy({ where: { channel_id: channeluser.channel_id, user_id: channeluser.user_id } });
     }
 
+    const findChannelUsers = (channelId) => {
+        return ChannelUsers.findAll({ where: { channel_id: channelId }, raw: true });
+    }
+
     return {
         createChannelUser,
         findOrCreateChannelUser,
-        removeChannelUser
+        removeChannelUser,
+        findChannelUsers
     }
 }
 

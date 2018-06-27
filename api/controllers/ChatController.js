@@ -1,4 +1,5 @@
 const _ = require('underscore');
+const asnc = require('async');
 const axios = require('axios');
 const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
@@ -10,6 +11,7 @@ const channelsService = require('../services/db/channels.service')();
 const channelUsersService = require('../services/db/channelUsers.service')();
 const messagesService = require('../services/db/messages.service')();
 const userStatusService = require('../services/db/userStatus.service')();
+const unreadMessagesService = require('../services/db/unreadMessages.service')();
 
 let key = process.env.ENCRYPT_KEY;
 
@@ -136,7 +138,6 @@ const ChatController = () => {
         }
     }
 
-
     async function joinChannel(req, res) {
         let channelName = req.body.channel_name;
         let userId = req.body.user_id;
@@ -215,19 +216,223 @@ const ChatController = () => {
         }
     }
 
-
-    async function chatHistory(req, res) {
-        console.log("Chat History");
-        console.log('this is req userid', req.get('userid'));
-        let userId = Encrypter.aesDecryption(process.env.ENCRYPT_KEY, req.get('userid'));
-        console.log('this is the user', userId);
-
+    async function deleteChannel(req, res) {
+        console.log("delete Called");
         let channelName = req.body.channel_name;
 
         if (!channelName) {
             return res.json(new responseObj('channel_name is not provided, BAD REQUEST', 400, false));
         }
 
+        try {
+            channelName = Encrypter.aesDecryption(key, channelName.toString());
+        } catch (err) {
+            console.log("Decryption Error", err);
+        }
+
+        let channel = {
+            channel_name: channelName
+        }
+        let channelInfo;
+        let updatedChannelInfo;
+        try {
+            // let deleteChannelContent = await channelsService.updateChannelById()
+            let channelContent = await channelsService.findChannel(channel);
+            console.log("channel Content", channelContent);
+            channelInfo = channelContent;
+        } catch (err) {
+            console.log("Selection Error", err);
+        }
+
+        try {
+            let deletedContent = await channelsService.updateChannelById(channelInfo.channel_id);
+            console.log('deletedContent', deletedContent);
+        } catch (err) {
+            console.log("Deletation Error", err);
+        }
+
+        try {
+            let channelContent = await channelsService.findChannel(channel);
+            updatedChannelInfo = channelContent;
+        } catch (err) {
+            console.log("Selection Error", err);
+        }
+
+
+        if (updatedChannelInfo) {
+            try {
+                _.forEach(updatedChannelInfo, (value, key) => {
+                    if (typeof updatedChannelInfo[key] === 'object') {
+                        updatedChannelInfo[key] = Encrypter.aesEncryption(key, JSON.stringify(updatedChannelInfo[key]));
+                    } else {
+                        updatedChannelInfo[key] = Encrypter.aesEncryption(key, updatedChannelInfo[key].toString());
+                    }
+                })
+            } catch (err) {
+                console.log("Decryption Error", err);
+            }
+            return res.json(new responseObj("Succssfully Deleted Channel", 200, true, updatedChannelInfo));
+        } else {
+            return res.json(new responseObj("INTERNAL SERVER ERROR", 500, false));
+        }
+    }
+
+    async function chatHistory(req, res) {
+        console.log("Chat History");
+
+        let channelName = req.body.channel_name;
+        let userId = req.body.user_id;
+
+        if (!userId) {
+            return res.json(new responseObj('user_id not provided, BAD REQUEST', 400, false));
+        }
+
+        if (!channelName) {
+            return res.json(new responseObj('channel_name is not provided, BAD REQUEST', 400, false));
+        }
+
+        // Decrypt the requested data
+        // setTimeout(async function () {
+        try {
+            try {
+                channelName = Encrypter.aesDecryption(key, channelName);
+                userId = Encrypter.aesDecryption(key, userId);
+            } catch (err) {
+                console.log("Decryption Error", err);
+                return res.json(new responseObj("Decryption Internal Error", 500, false));
+            }
+
+
+            // get the channel info
+            let channelInfo;
+            try {
+                let channel = { channel_name: channelName };
+                channelInfo = await channelsService.findChannel(channel);
+                console.log("Channel Information", channelInfo);
+            } catch (err) {
+                console.log("Selection Error", err);
+            }
+
+            // get all channel users
+            let channelUsersInfo;
+            try {
+                let channelUsersContent = await channelUsersService.findChannelUsers(parseInt(channelInfo.channel_id));
+                console.log(channelUsersContent);
+                channelUsersInfo = channelUsersContent;
+            } catch (err) {
+                console.log("Selection Error", err);
+            }
+
+            // fetch the unread message status
+
+            let unreadMessageInfo;
+            try {
+                let unreadMessageContent = await unreadMessagesService.findUnreadMessageByUserIdChannelId(userId, parseInt(channelInfo.channel_id));
+                console.log("unreadMessageContent", unreadMessageContent);
+                unreadMessageInfo = unreadMessageContent;
+            } catch (err) {
+                console.log("Selection Error", err);
+            }
+
+            let unreadMessagesList;
+            let readMessagesList;
+
+            if (unreadMessageInfo) {
+                // now get the list on behalf of "unread_messages" and "read_messages"
+
+                // for unread messages 
+                try {
+                    let unreadMessageContent = await messagesService.getPaginatedUnreadMessagesByChannelIdMessageId(parseInt(channelInfo.channel_id), parseInt(unreadMessageInfo.message_id));
+                    console.log("unreadMessageContent", unreadMessageContent);
+                    unreadMessagesList = unreadMessageContent;
+                } catch (err) {
+                    console.log("Selection Error", err);
+                }
+
+                // for unread messages 
+                try {
+                    let readMessageContent = await messagesService.getPaginatedReadMessagesByChannelIdMessageId(parseInt(channelInfo.channel_id), parseInt(unreadMessageInfo.message_id));
+                    console.log("readMessageContent", readMessageContent);
+                    readMessagesList = readMessageContent;
+                } catch (err) {
+                    console.log("Selection Error", err);
+                }
+
+            } else {
+
+                // new user fetch the complete list "unread_messages" = all and "read_messages" = 0;
+
+                try {
+                    unreadMessagesList = await messagesService.getMessagesByChannelId(parseInt(channelInfo.channel_id));
+                    console.log("unreadMessagesList", unreadMessagesList);
+                } catch (err) {
+                    console.log("Selection Error", err);
+                }
+                readMessagesList = [];
+            }
+
+            try {
+                _.forEach(unreadMessagesList, function (value, key) {
+                    console.log('this is value', value);
+                    delete unreadMessagesList[key].channel_id;
+                    unreadMessagesList[key].channel_name = channelInfo.channel_name;
+                })
+
+                asnc.eachOf(unreadMessagesList, async function (value, key) {
+                    if (parseInt(unreadMessagesList[key].parent_id)) {
+                        let replyMessageContent;
+                        try {
+                            replyMessageContent = await messagesService.getMessageById(parseInt(unreadMessagesList[key].parent_id))
+                            delete replyMessageContent.channel_id;
+                            replyMessageContent.channel_name = channelInfo.channel_name;
+                            unreadMessagesList[key].replyList = replyMessageContent;
+                        } catch (err) {
+                            console.log("Reply Selection Error", err);
+                        }
+
+                    } else {
+                        unreadMessagesList[key].replyList = {};
+                    }
+                })
+
+                _.forEach(readMessagesList, function (value, key) {
+                    delete readMessagesList[key].channel_id;
+                    readMessagesList[key].channel_name = channelInfo.channel_name;
+                })
+
+                asnc.eachOf(readMessagesList, async function (value, key) {
+                    if (parseInt(readMessagesList[key].parent_id)) {
+                        let replyMessageContent;
+                        try {
+                            replyMessageContent = await messagesService.getMessageById(parseInt(readMessagesList[key].parent_id))
+                            delete replyMessageContent.channel_id;
+                            replyMessageContent.channel_name = channelInfo.channel_name;
+                            readMessagesList[key].replyList = replyMessageContent;
+                        } catch (err) {
+                            console.log("Reply Selection Error", err);
+                        }
+
+                    } else {
+                        readMessagesList[key].replyList = {};
+                    }
+                })
+                // console.log("After Computation", unreadMessagesList);
+            } catch (err) {
+                console.log("Computation Error", err);
+            }
+
+            let payload = {
+                unreadMessages: unreadMessagesList,
+                readMessages: readMessagesList
+            }
+            setTimeout(function () {
+                console.log("final payload", payload)
+                return res.json(new responseObj("Successfully Fetched Data", 200, true, Encrypter.aesEncryption(key, JSON.stringify(payload))));
+            }, 4000);
+        } catch (err) {
+            return res.json(new responseObj("Internal Server Error", 500, false));
+        }
+        // },5000)
     }
 
     async function chatInsert(req, res) {
@@ -307,6 +512,7 @@ const ChatController = () => {
         }
 
         if (insertedMessageInfo) {
+            insertedMessageInfo.message_timestamp = messageInfo.message_timestamp;
             _.forEach(insertedMessageInfo, (item, key) => {
                 if (item != null) {
                     insertedMessageInfo[key] = Encrypter.aesEncryption(process.env.ENCRYPT_KEY, insertedMessageInfo[key].toString());
@@ -322,6 +528,53 @@ const ChatController = () => {
         // console.log('this is insertedMessageConent', insertedMessageInfo);
     }
 
+    async function readChatHistory(req, res) {
+        console.log("Read Chat History");
+
+        let channelName = req.body.channel_name;
+        let userId = req.body.user_id;
+        let messageId = req.body.message_id;
+
+        if (!userId) {
+            return res.json(new responseObj('user_id not provided, BAD REQUEST', 400, false));
+        }
+
+        if (!channelName) {
+            return res.json(new responseObj('channel_name is not provided, BAD REQUEST', 400, false));
+        }
+
+        if (!messageId) {
+            return res.json(new responseObj('message_id not provided, BAD REQUEST', 400, false));
+        }
+
+        try {
+            channelName = Encrypter.aesEncryption(key, channelName);
+            userId = Encrypter.aesEncryption(key, userId);
+            messageId = Encrypter.aesEncryption(key, messageId);
+        } catch (err) {
+            console.log("Decryption Error", err);
+        }
+
+        // get the channel info
+        let channelInfo;
+        try {
+            let channel = { channel_name: channelName };
+            channelInfo = await channelsService.findChannel(channel);
+            console.log("Channel Information", channelInfo);
+        } catch (err) {
+            console.log("Selection Error", err);
+        }
+
+        // get all channel users
+        let channelUsersInfo;
+        try {
+            let channelUsersContent = await channelUsersService.findChannelUsers(parseInt(channelInfo.channel_id));
+            console.log(channelUsersContent);
+            channelUsersInfo = channelUsersContent;
+        } catch (err) {
+            console.log("Selection Error", err);
+        }
+    }
 
     async function setUserStatus(req, res) {
 
@@ -385,11 +638,13 @@ const ChatController = () => {
         createChannel,
         joinChannel,
         leaveChannel,
+        deleteChannel,
         chatHistory,
         chatInsert,
         aesEncryptor,
         aesDecryptor,
-        setUserStatus
+        setUserStatus,
+        readChatHistory
     }
 }
 

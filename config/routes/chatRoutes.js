@@ -14,6 +14,7 @@ const FileInsertController = require('../../api/controllers/FileController');
 ChatRoutes.post('/createChannel', formDataParser.array(), authKeyValidator, tokenValidator, ChatController.createChannel);
 ChatRoutes.post('/joinChannel', formDataParser.array(), authKeyValidator, tokenValidator, ChatController.joinChannel);
 ChatRoutes.post('/leaveChannel', formDataParser.array(), authKeyValidator, tokenValidator, ChatController.leaveChannel);
+ChatRoutes.post('/deleteChannel', formDataParser.array(), authKeyValidator, tokenValidator, ChatController.deleteChannel);
 
 ChatRoutes.post('/chatHistory', formDataParser.array(), authKeyValidator, tokenValidator, ChatController.chatHistory);
 ChatRoutes.post('/chatInsert', FileInsertController.upload.single('file'), authKeyValidator, tokenValidator, ChatController.chatInsert);
