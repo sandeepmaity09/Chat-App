@@ -702,7 +702,7 @@ io.on('connection', async function (socket) {
                     console.log(messageInfo);
                     let multiMediaMessageInfo;
                     try {
-                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(multiMediaMessageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
                     } catch (err) {
                         console.log("Database Selection Error", err);
