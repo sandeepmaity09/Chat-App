@@ -43,6 +43,13 @@ const server = http.Server(app);
 let io = require('socket.io')(server);
 
 /**
+ * Static Resource Sharing
+ */
+app.use('/static', express.static(path.join(__dirname + '../../uploads')));
+console.log(path.join(__dirname + '../../uploads'));
+
+
+/**
  * Routing Setup
  */
 const routes = require('../config/routes/chatRoutes');
@@ -73,12 +80,10 @@ app.use(bodyParser.json());
  */
 app.use(morgan('dev'));
 
-/**
- * Static Resource Sharing
- */
-// app.use('/public', express.static(path.join(__dirname + '/public')));
+
 
 /**
+ * 
  * Express Routes Application
  */
 app.use('/inrchat/chatservice', routes);
