@@ -548,31 +548,76 @@ const ChatController = () => {
         }
 
         try {
-            channelName = Encrypter.aesEncryption(key, channelName);
-            userId = Encrypter.aesEncryption(key, userId);
-            messageId = Encrypter.aesEncryption(key, messageId);
-        } catch (err) {
-            console.log("Decryption Error", err);
-        }
 
-        // get the channel info
-        let channelInfo;
-        try {
-            let channel = { channel_name: channelName };
-            channelInfo = await channelsService.findChannel(channel);
-            console.log("Channel Information", channelInfo);
-        } catch (err) {
-            console.log("Selection Error", err);
-        }
+            try {
+                channelName = Encrypter.aesDecryption(key, channelName);
+                userId = Encrypter.aesDecryption(key, userId);
+                messageId = Encrypter.aesDecryption(key, messageId);
+            } catch (err) {
+                console.log("Decryption Error", err);
+            }
 
-        // get all channel users
-        let channelUsersInfo;
-        try {
-            let channelUsersContent = await channelUsersService.findChannelUsers(parseInt(channelInfo.channel_id));
-            console.log(channelUsersContent);
-            channelUsersInfo = channelUsersContent;
+            // get the channel info
+            let channelInfo;
+            try {
+                let channel = { channel_name: channelName };
+                channelInfo = await channelsService.findChannel(channel);
+                console.log("Channel Information", channelInfo);
+            } catch (err) {
+                console.log("Selection Error", err);
+            }
+
+            // get all channel users
+            let channelUsersInfo;
+            try {
+                let channelUsersContent = await channelUsersService.findChannelUsers(parseInt(channelInfo.channel_id));
+                console.log(channelUsersContent);
+                channelUsersInfo = channelUsersContent;
+            } catch (err) {
+                console.log("Selection Error", err);
+            }
+
+            let readMessagesList;
+            try {
+                let readMessagesContent = await messagesService.getPaginatedReadMessagesWithoutSameByChannelIdMessageId(parseInt(channelInfo.channel_id), parseInt(messageId));
+                readMessagesList = readMessagesContent;
+            } catch (err) {
+                console.log("Selection Error", err);
+            }
+
+            try {
+                _.forEach(readMessagesList, function (value, key) {
+                    delete readMessagesList[key].channel_id;
+                    readMessagesList[key].channel_name = channelInfo.channel_name;
+                })
+
+                asnc.eachOf(readMessagesList, async function (value, key) {
+                    if (parseInt(readMessagesList[key].parent_id)) {
+                        let replyMessageContent;
+                        try {
+                            replyMessageContent = await messagesService.getMessageById(parseInt(readMessagesList[key].parent_id))
+                            delete replyMessageContent.channel_id;
+                            replyMessageContent.channel_name = channelInfo.channel_name;
+                            readMessagesList[key].replyList = replyMessageContent;
+                        } catch (err) {
+                            console.log("Reply Selection Error", err);
+                        }
+
+                    } else {
+                        readMessagesList[key].replyList = {};
+                    }
+                })
+            } catch (err) {
+                console.log("Computation Error", err);
+            }
+
+            let payload = {
+                readMessages: readMessagesList
+            }
+            payload = Encrypter.aesEncryption(key, JSON.stringify(payload));
+            return res.json(new responseObj("Successfully Fetched Data", 200, true, payload));
         } catch (err) {
-            console.log("Selection Error", err);
+            return res.json(new responseObj("Internal Server Error", 500, false));
         }
     }
 

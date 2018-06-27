@@ -17,6 +17,7 @@ ChatRoutes.post('/leaveChannel', formDataParser.array(), authKeyValidator, token
 ChatRoutes.post('/deleteChannel', formDataParser.array(), authKeyValidator, tokenValidator, ChatController.deleteChannel);
 
 ChatRoutes.post('/chatHistory', formDataParser.array(), authKeyValidator, tokenValidator, ChatController.chatHistory);
+ChatRoutes.post('/readChatHistory', formDataParser.array(), authKeyValidator, tokenValidator, ChatController.readChatHistory);
 ChatRoutes.post('/chatInsert', FileInsertController.upload.single('file'), authKeyValidator, tokenValidator, ChatController.chatInsert);
 
 ChatRoutes.post('/updateUserStatus', formDataParser.array(), authKeyValidator, tokenValidator, ChatController.setUserStatus);

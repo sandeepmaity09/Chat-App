@@ -23,12 +23,17 @@ const MessageService = () => {
     const getPaginatedUnreadMessagesByChannelIdMessageId = (channelId, messageId) => {
         return sequlize.query(`SELECT * FROM chat_messages WHERE channel_id = ${parseInt(channelId)} AND message_id > ${parseInt(messageId)}`, { type: sequlize.QueryTypes.SELECT });
     }
+
+    const getPaginatedReadMessagesWithoutSameByChannelIdMessageId = (channelId, messageId) => {
+        return sequlize.query(`SELECT * FROM chat_messages WHERE channel_id = ${parseInt(channelId)} AND message_id < ${parseInt(messageId)} LIMIT 50`, { type: sequlize.QueryTypes.SELECT })
+    }
     return {
         getMessageById,
         saveMessage,
         getMessagesByChannelId,
         getPaginatedReadMessagesByChannelIdMessageId,
-        getPaginatedUnreadMessagesByChannelIdMessageId
+        getPaginatedUnreadMessagesByChannelIdMessageId,
+        getPaginatedReadMessagesWithoutSameByChannelIdMessageId
     }
 }
 
