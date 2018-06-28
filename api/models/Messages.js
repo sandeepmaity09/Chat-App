@@ -46,12 +46,10 @@ const Message = sequlize.define('Message', {
         type: Sequlize.INTEGER(2)
     },
     created_at: {
-        type: Sequlize.DATE,
-        defaultValue: Sequlize.NOW
+        type: Sequlize.DATE
     },
     updated_at: {
-        type: Sequlize.DATE,
-        defaultValue: Sequlize.NOW
+        type: Sequlize.DATE
     }
 },
     {
