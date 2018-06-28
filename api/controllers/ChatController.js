@@ -488,7 +488,7 @@ const ChatController = () => {
                 filelink: req.file.filename,
                 thumbnail: ((parseInt(messageInfo.message_type) === 3) ? req.file.filename.split('.')[0].toString() + ".jpg" : ""),
                 is_flagged: 0,
-                message_status: 0,
+                message_status: 1,
                 created_at: messageInfo.created_at,
                 updated_at: messageInfo.created_at
             }
@@ -673,6 +673,7 @@ const ChatController = () => {
             console.log("Insertation Error", err);
         }
     }
+
 
 
     return {
