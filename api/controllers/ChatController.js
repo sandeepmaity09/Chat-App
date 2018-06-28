@@ -492,8 +492,8 @@ const ChatController = () => {
                 thumbnail: ((parseInt(messageInfo.message_type) === 3) ? req.file.filename.split('.')[0].toString() + ".jpg" : ""),
                 is_flagged: 0,
                 message_status: 1,
-                created_at: getUTCTime(),
-                updated_at: getUTCTime()
+                created_at: getUTCTime().toString(),
+                updated_at: getUTCTime().toString()
             }
             let messageContent = await messagesService.saveMessage(message);
             // console.log('this is messageContent', messageContent);
