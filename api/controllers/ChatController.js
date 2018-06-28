@@ -499,8 +499,8 @@ const ChatController = () => {
             // let messageContent = await messagesService.saveMessage(message);
             let messageContent = await messagesService.createMultimediaMessage(message);
             console.log('this is messageContent', messageContent);
-            if (messageContent.length) {
-                insertedMessageId = messageContent.dataValues.message_id;
+            if (messageContent) {
+                insertedMessageId = messageContent;
                 try {
                     let tempContent = await messagesService.getMessageById(insertedMessageId);
                     insertedMessageInfo = tempContent
