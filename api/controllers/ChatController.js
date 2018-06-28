@@ -12,6 +12,7 @@ const channelUsersService = require('../services/db/channelUsers.service')();
 const messagesService = require('../services/db/messages.service')();
 const userStatusService = require('../services/db/userStatus.service')();
 const unreadMessagesService = require('../services/db/unreadMessages.service')();
+const userChannelStatusService = require('../services/db/userChannelStatus.service')();
 
 let key = process.env.ENCRYPT_KEY;
 
@@ -674,6 +675,76 @@ const ChatController = () => {
         }
     }
 
+    async function setUserChannelStatus(req, res) {
+        let userId = req.body.user_id;
+        let channelName = req.body.channel_name;
+        let userStatus = req.body.userchannel_status;
+
+        if (!userId) {
+            return res.json(new responseObj('user_id not provided, BAD REQUEST', 400, false));
+        }
+
+        if (!channelName) {
+            return res.json(new responseObj('channel_name not provided, BAD REQUEST', 400, false));
+        }
+
+        if (!userStatus) {
+            return res.json(new responseObj('user_status not provided, BAD REQUEST', 400, false));
+        }
+
+        try {
+            userId = Encrypter.aesDecryption(key, userId);
+            userStatus = Encrypter.aesDecryption(key, userStatus);
+            channelName = Encrypter.aesDecryption(key, channelName);
+        } catch (err) {
+            console.log("Decryption Error", err);
+            return res.json(new responseObj("Decryption Internal Error", 500, false));
+        }
+        let channelInfo;
+        try {
+            channelInfo = await channelsService.findChannel({ channel_name: channelName });
+        } catch (err) {
+            console.log("Channel Fetching Error", err);
+        }
+
+        let selectedMessageContent;
+        try {
+            selectedUserChannelContent = await userChannelStatusService.findUserChannelStatusByUserIdChannelId(parseInt(userId), parseInt(channelInfo.channel_id));
+            console.log("this is selectedUserChannelConetent", selectedUserChannelContent);
+        } catch (err) {
+            console.log("UserChannelStatus Fetching Error", err);
+        }
+        // try {
+            if (selectedUserChannelContent) {
+                // exist
+                try {
+                    let updatedUserChannelStatusContent = await userChannelStatusService.updateUserChannelStatus(parseInt(userId), parseInt(channelInfo.channel_id), parseInt(userStatus));
+                    return res.json(new responseObj("Successfully Updated", 200, true));
+                } catch (err) {
+                    console.log("UserChannelStatus Updation Error", err);
+                }
+            } else {
+                // not exist
+                try {
+                    userchannelobj = {
+                        user_id: parseInt(userId),
+                        channel_id: parseInt(channelInfo.channel_id),
+                        user_channel_status: parseInt(userStatus)
+                    }
+                    let insertedUserChannelContent = await userChannelStatusService.createUserChannelStatus(userchannelobj);
+                    if (insertedUserChannelContent) {
+                        return res.json(new responseObj("Successfully Updated", 200, true));
+                    }
+                } catch (err) {
+                    console.log("UserChannelStatus Insertation Error", err);
+                }
+            }
+        // } catch (err) {
+        //     return res.json(new responseObj("Internal Server Error", 500, false));
+        //     console.log("UserChannelUpdationError", err);
+        // }
+    }
+
 
 
     return {
@@ -686,6 +757,7 @@ const ChatController = () => {
         aesEncryptor,
         aesDecryptor,
         setUserStatus,
+        setUserChannelStatus,
         readChatHistory
     }
 }

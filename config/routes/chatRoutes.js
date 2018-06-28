@@ -20,6 +20,7 @@ ChatRoutes.post('/chatHistory', formDataParser.array(), authKeyValidator, tokenV
 ChatRoutes.post('/readChatHistory', formDataParser.array(), authKeyValidator, tokenValidator, ChatController.readChatHistory);
 ChatRoutes.post('/chatInsert', FileInsertController.upload.single('file'), authKeyValidator, tokenValidator, ChatController.chatInsert);
 
+ChatRoutes.post('/updateUserChannelStatus', formDataParser.array(), authKeyValidator, tokenValidator, ChatController.setUserChannelStatus);
 ChatRoutes.post('/updateUserStatus', formDataParser.array(), authKeyValidator, tokenValidator, ChatController.setUserStatus);
 
 ChatRoutes.post('/encrypt', formDataParser.array(), ChatController.aesEncryptor);
