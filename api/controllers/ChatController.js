@@ -437,7 +437,7 @@ const ChatController = () => {
 
     async function chatInsert(req, res) {
         console.log('chatInsert file', req.file);
-        // console.log('chatInsert body', req.body);
+        console.log('chatInsert body', req.body);
         let messageInfo = req.body;
         try {
             _.forEach(messageInfo, (item, key) => {
