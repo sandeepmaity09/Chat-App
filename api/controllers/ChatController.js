@@ -441,11 +441,7 @@ const ChatController = () => {
         let messageInfo = req.body;
         try {
             _.forEach(messageInfo, (item, key) => {
-                if (item !== null) {
-                    messageInfo[key] = Encrypter.aesDecryption(process.env.ENCRYPT_KEY, messageInfo[key].toString());
-                } else {
-                    delete messageInfo[key];
-                }
+                messageInfo[key] = Encrypter.aesDecryption(process.env.ENCRYPT_KEY, messageInfo[key]);
             })
         } catch (err) {
             console.log('Encryption Error', err);
@@ -487,7 +483,7 @@ const ChatController = () => {
                 channel_id: parseInt(channelInfo.channel_id),
                 chat_type: parseInt(messageInfo.chat_type),
                 message_type: parseInt(messageInfo.message_type),
-                message: "",
+                message: messageInfo.message,
                 parent_id: parseInt(messageInfo.parent_id),
                 filelink: req.file.filename,
                 thumbnail: ((parseInt(messageInfo.message_type) === 3) ? req.file.filename.split('.')[0].toString() + ".jpg" : ""),
