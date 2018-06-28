@@ -486,7 +486,7 @@ const ChatController = () => {
                 channel_id: parseInt(channelInfo.channel_id),
                 chat_type: parseInt(messageInfo.chat_type),
                 message_type: parseInt(messageInfo.message_type),
-                message: messageInfo.message,
+                message: (messageInfo.message) ? messageInfo.message : '',
                 parent_id: parseInt(messageInfo.parent_id),
                 filelink: req.file.filename,
                 thumbnail: ((parseInt(messageInfo.message_type) === 3) ? req.file.filename.split('.')[0].toString() + ".jpg" : ""),
