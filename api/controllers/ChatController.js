@@ -495,6 +495,7 @@ const ChatController = () => {
                 created_at: getUTCTime().toString(),
                 updated_at: getUTCTime().toString()
             }
+            console.log("message content", message);
             let messageContent = await messagesService.saveMessage(message);
             // console.log('this is messageContent', messageContent);
             if (messageContent) {
