@@ -1153,80 +1153,80 @@ io.on('connection', async function (socket) {
     })
 
 
-    socket.on('user_channel status', async function (data) {
-        console.log('user_channel is called by ', socket.id);
-        let messageInfo;
-        try {
-            messageInfo = JSON.parse(data);
-        } catch (err) {
-            console.log("Parsing Error", err);
-        }
-        try {
-            _.forEach(messageInfo, (value, key) => {
-                messageInfo[key] = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, messageInfo[key]);
-            })
-        } catch (err) {
-            console.log("Parsing Error", err);
-        }
+    // socket.on('user_channel status', async function (data) {
+    //     console.log('user_channel is called by ', socket.id);
+    //     let messageInfo;
+    //     try {
+    //         messageInfo = JSON.parse(data);
+    //     } catch (err) {
+    //         console.log("Parsing Error", err);
+    //     }
+    //     try {
+    //         _.forEach(messageInfo, (value, key) => {
+    //             messageInfo[key] = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, messageInfo[key]);
+    //         })
+    //     } catch (err) {
+    //         console.log("Parsing Error", err);
+    //     }
 
-        let userId = messageInfo.user_id;
-        let userStatus = messageInfo.user_status;
-        let channelName = messageInfo.channel_name;
+    //     let userId = messageInfo.user_id;
+    //     let userStatus = messageInfo.user_status;
+    //     let channelName = messageInfo.channel_name;
 
-        let channelContent;
-        try {
-            let channelContentList = await channelsService.findChannel({ channel_name: channelName });
-            channelContent = channelContentList;
-        } catch (err) {
-            console.log('this is error from channelContent', err);
-        }
+    //     let channelContent;
+    //     try {
+    //         let channelContentList = await channelsService.findChannel({ channel_name: channelName });
+    //         channelContent = channelContentList;
+    //     } catch (err) {
+    //         console.log('this is error from channelContent', err);
+    //     }
 
-        let selectedUserChannelContent;
-        try {
-            selectedUserChannelContent = await userChannelStatusService.findUserChannelStatusByUserIdChannelId(parseInt(userId), parseInt(channelContent.channel_id));
-            console.log("this is selectedUserChannelConetent", selectedUserChannelContent);
-        } catch (err) {
-            console.log("UserChannelStatus Fetching Error", err);
-        }
-        try {
-            if (selectedUserChannelContent) {
-                // exist
-                try {
-                    let updatedUserChannelStatusContent = await userChannelStatusService.updateUserChannelStatus(parseInt(userId), parseInt(channelContent.channel_id), parseInt('1'));
-                } catch (err) {
-                    console.log("UserChannelStatus Updation Error", err);
-                }
-            } else {
-                // not exist
-                try {
-                    userchannelobj = {
-                        user_id: parseInt(userId),
-                        channel_id: parseInt(channelContent.channel_id),
-                        user_channel_status: parseInt('1')
-                    }
-                    let insertedUserChannelContent = await userChannelStatusService.createUserChannelStatus(userchannelobj);
-                    if (insertedUserChannelContent) {
-                    }
-                } catch (err) {
-                    console.log("UserChannelStatus Insertation Error", err);
-                }
-            }
-        } catch (err) {
-            console.log("UserChannelUpdationError", err);
-        }
+    //     let selectedUserChannelContent;
+    //     try {
+    //         selectedUserChannelContent = await userChannelStatusService.findUserChannelStatusByUserIdChannelId(parseInt(userId), parseInt(channelContent.channel_id));
+    //         console.log("this is selectedUserChannelConetent", selectedUserChannelContent);
+    //     } catch (err) {
+    //         console.log("UserChannelStatus Fetching Error", err);
+    //     }
+    //     try {
+    //         if (selectedUserChannelContent) {
+    //             // exist
+    //             try {
+    //                 let updatedUserChannelStatusContent = await userChannelStatusService.updateUserChannelStatus(parseInt(userId), parseInt(channelContent.channel_id), parseInt('1'));
+    //             } catch (err) {
+    //                 console.log("UserChannelStatus Updation Error", err);
+    //             }
+    //         } else {
+    //             // not exist
+    //             try {
+    //                 userchannelobj = {
+    //                     user_id: parseInt(userId),
+    //                     channel_id: parseInt(channelContent.channel_id),
+    //                     user_channel_status: parseInt('1')
+    //                 }
+    //                 let insertedUserChannelContent = await userChannelStatusService.createUserChannelStatus(userchannelobj);
+    //                 if (insertedUserChannelContent) {
+    //                 }
+    //             } catch (err) {
+    //                 console.log("UserChannelStatus Insertation Error", err);
+    //             }
+    //         }
+    //     } catch (err) {
+    //         console.log("UserChannelUpdationError", err);
+    //     }
 
-        try {
-            // find all users in this channel and then check for each user's status
-            try {
-                let channelUsersContent = channelUsersService.findChannelUsers(parseInt(channelContent.channel_id));
-                console.log("channelUsersContent", channelUsersContent);
-            } catch (err) {
-                console.log("")
-            }
-        } catch (err) {
-            console.log("");
-        }
-    })
+    //     try {
+    //         // find all users in this channel and then check for each user's status
+    //         try {
+    //             let channelUsersContent = channelUsersService.findChannelUsers(parseInt(channelContent.channel_id));
+    //             console.log("channelUsersContent", channelUsersContent);
+    //         } catch (err) {
+    //             console.log("")
+    //         }
+    //     } catch (err) {
+    //         console.log("");
+    //     }
+    // })
 
 
 
