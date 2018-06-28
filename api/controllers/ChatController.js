@@ -6,6 +6,7 @@ const path = require('path');
 
 const responseObj = require('../helpers/responseObj');
 const Encrypter = require('../helpers/aesHelpers');
+const getUTCTime = require('../helpers/dateHelpers');
 
 const channelsService = require('../services/db/channels.service')();
 const channelUsersService = require('../services/db/channelUsers.service')();
@@ -490,8 +491,8 @@ const ChatController = () => {
                 thumbnail: ((parseInt(messageInfo.message_type) === 3) ? req.file.filename.split('.')[0].toString() + ".jpg" : ""),
                 is_flagged: 0,
                 message_status: 1,
-                created_at: messageInfo.created_at,
-                updated_at: messageInfo.created_at
+                created_at: getUTCTime(),
+                updated_at: getUTCTime()
             }
             let messageContent = await messagesService.saveMessage(message);
             // console.log('this is messageContent', messageContent);
