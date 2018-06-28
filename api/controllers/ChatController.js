@@ -479,6 +479,7 @@ const ChatController = () => {
         }
         let insertedMessageId;
         let insertedMessageInfo;
+        console.log("getT", getUTCTime());
         try {
             let message = {
                 user_id: parseInt(messageInfo.user_id),
