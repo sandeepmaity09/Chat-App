@@ -122,6 +122,7 @@ let getUTCDate = require('../api/helpers/dateHelpers');
  */
 const channelsService = require('../api/services/db/channels.service')();
 const userStatusService = require('../api/services/db/userStatus.service')();
+const userChannelStatusService = require('../api/services/db/userChannelStatus.service')();
 const CONSTANTS = require('../api/helpers/chatConstants');
 
 
@@ -162,7 +163,6 @@ io.on('connection', async function (socket) {
         } catch (err) {
             console.log('Decryption Error', err);
         }
-
         let channelContent;
         try {
             let channelContentList = await channelsService.findOrCreateChannel({ channel_name: channelName });
@@ -172,27 +172,23 @@ io.on('connection', async function (socket) {
         } catch (err) {
             console.log('this is error from channelContent', err);
         }
-
-        _.forEach(io.sockets.adapter.sids[socket.id], (item) => {
+        _.forEach(io.sockets.adapter.sids[socket.id], (item, value) => {
             if (item == socket.id || item == channelContent.channel_id) {
 
             } else {
-                socket.leave(item);
+                socket.leave(value);
             }
         })
         socket.join(channelContent.channel_id);
-
         let channelUserPayload = {
             user_id: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, userId),
             channel_name: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, channelName)
         }
-
         console.log('this is channel payload', channelUserPayload);
-
         setTimeout(function () {
-            io.in(channelContent.channel_id).emit('join', {
+            io.in(channelContent.channel_id).emit('join', JSON.stringify({
                 payload: channelUserPayload
-            })
+            }))
         }, 100)
     })
 
@@ -203,7 +199,6 @@ io.on('connection', async function (socket) {
     socket.on("switch channel", async function (channeldata) {
         console.log('switch channel called by socket user', socket.id);
         console.log('this is data received at switch channel', channeldata);
-
         let channelInfo;
         try {
             channelInfo = JSON.parse(channeldata);
@@ -218,8 +213,6 @@ io.on('connection', async function (socket) {
         } catch (err) {
             console.log("Decryption Error", err);
         }
-
-
         let channelContent;
         try {
             let channelContentList = await channelsService.findOrCreateChannel({ channel_name: channelName });
@@ -230,11 +223,47 @@ io.on('connection', async function (socket) {
             console.log('this is error from channelContent', err);
         }
 
-        _.forEach(io.sockets.adapter.sids[socket.id], (item) => {
-            if (item == socket.id || item == channelContent.channel_id) {
+
+        let selectedUserChannelContent;
+        try {
+            selectedUserChannelContent = await userChannelStatusService.findUserChannelStatusByUserIdChannelId(parseInt(userId), parseInt(channelContent.channel_id));
+            console.log("this is selectedUserChannelConetent", selectedUserChannelContent);
+        } catch (err) {
+            console.log("UserChannelStatus Fetching Error", err);
+        }
+        try {
+            if (selectedUserChannelContent) {
+                // exist
+                try {
+                    let updatedUserChannelStatusContent = await userChannelStatusService.updateUserChannelStatus(parseInt(userId), parseInt(channelContent.channel_id), parseInt('1'));
+                } catch (err) {
+                    console.log("UserChannelStatus Updation Error", err);
+                }
+            } else {
+                // not exist
+                try {
+                    userchannelobj = {
+                        user_id: parseInt(userId),
+                        channel_id: parseInt(channelContent.channel_id),
+                        user_channel_status: parseInt('1')
+                    }
+                    let insertedUserChannelContent = await userChannelStatusService.createUserChannelStatus(userchannelobj);
+                    if (insertedUserChannelContent) {
+                    }
+                } catch (err) {
+                    console.log("UserChannelStatus Insertation Error", err);
+                }
+            }
+        } catch (err) {
+            console.log("UserChannelUpdationError", err);
+        }
+        // console.log("bhut sara data", io.sockets.adapter.sids[socket.id]);
+        _.forEach(io.sockets.adapter.sids[socket.id], (item, value) => {
+            if (value == socket.id || value == channelContent.channel_id) {
 
             } else {
-                socket.leave(item);
+                console.log("I am called leaving", item, value);
+                socket.leave(value);
             }
         })
         console.log('Joininng channel', channelContent.channel_id);
@@ -253,7 +282,6 @@ io.on('connection', async function (socket) {
     socket.on("leave channel", async function (channeldata) {
         console.log('leave channel called by socket user', socket.id);
         console.log('this is data received at leave channel', channeldata);
-
         let channelInfo;
         try {
             channelInfo = JSON.parse(channeldata);
@@ -278,13 +306,40 @@ io.on('connection', async function (socket) {
             console.log('this is error from channelContent', err);
         }
 
-        _.forEach(io.sockets.adapter.sids[socket.id], (item) => {
-            if (item == socket.id || item == channelContent.channel_id) {
-
+        let selectedUserChannelContent;
+        try {
+            selectedUserChannelContent = await userChannelStatusService.findUserChannelStatusByUserIdChannelId(parseInt(userId), parseInt(channelContent.channel_id));
+            console.log("this is selectedUserChannelConetent", selectedUserChannelContent);
+        } catch (err) {
+            console.log("UserChannelStatus Fetching Error", err);
+        }
+        try {
+            if (selectedUserChannelContent) {
+                // exist
+                try {
+                    let updatedUserChannelStatusContent = await userChannelStatusService.updateUserChannelStatus(parseInt(userId), parseInt(channelContent.channel_id), parseInt('0'));
+                } catch (err) {
+                    console.log("UserChannelStatus Updation Error", err);
+                }
             } else {
-                socket.leave(item);
+                // not exist
+                try {
+                    userchannelobj = {
+                        user_id: parseInt(userId),
+                        channel_id: parseInt(channelContent.channel_id),
+                        user_channel_status: parseInt('0')
+                    }
+                    let insertedUserChannelContent = await userChannelStatusService.createUserChannelStatus(userchannelobj);
+                    if (insertedUserChannelContent) {
+                    }
+                } catch (err) {
+                    console.log("UserChannelStatus Insertation Error", err);
+                }
             }
-        })
+        } catch (err) {
+            console.log("UserChannelUpdationError", err);
+        }
+
         socket.leave(channelContent.channel_id);
     })
 
@@ -356,7 +411,7 @@ io.on('connection', async function (socket) {
                         }
 
                         try {
-                            let updatedMessageContent = await sequelize.query(`UPDATE chat_messages SET message="${messageInfo.message}",is_edited=${parseInt(messageInfo.is_edited)},updated_at="${messageInfo.updated_at}" WHERE message_id=${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                            let updatedMessageContent = await sequelize.query(`UPDATE chat_messages SET message="${messageInfo.message}",is_edited=${parseInt(messageInfo.is_edited)},updated_at="${getUTCDate()}" WHERE message_id=${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
                         } catch (err) {
                             console.log("Updateion Error", err);
                         }
@@ -428,7 +483,7 @@ io.on('connection', async function (socket) {
                         try {
                             messageInfo.is_flagged = 0;
                             messageInfo.message_status = 1;
-                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,filelink,thumbnail,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},"","",${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
+                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,filelink,thumbnail,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},"","",${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                             insertedMessageId = insertedMessageContent;
                         } catch (err) {
                             console.log("Insertation Error", err);
@@ -509,7 +564,7 @@ io.on('connection', async function (socket) {
                         }
 
                         try {
-                            let updatedMessageContent = await sequelize.query(`UPDATE chat_messages SET message="${messageInfo.message}",is_edited=${parseInt(messageInfo.is_edited)},updated_at="${messageInfo.updated_at}" WHERE message_id=${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                            let updatedMessageContent = await sequelize.query(`UPDATE chat_messages SET message="${messageInfo.message}",is_edited=${parseInt(messageInfo.is_edited)},updated_at="${getUTCDate()}" WHERE message_id=${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
                         } catch (err) {
                             console.log("Updateion Error", err);
                         }
@@ -572,7 +627,7 @@ io.on('connection', async function (socket) {
                         try {
                             messageInfo.is_flagged = 0;
                             messageInfo.message_status = 1;
-                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,filelink,thumbnail,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},"","",${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${messageInfo.created_at}","${messageInfo.updated_at}")`, { type: sequelize.QueryTypes.INSERT })
+                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,filelink,thumbnail,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},"","",${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                             insertedMessageId = insertedMessageContent;
                         } catch (err) {
                             console.log("Insertation Error", err);

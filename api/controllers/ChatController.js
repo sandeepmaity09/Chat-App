@@ -707,14 +707,14 @@ const ChatController = () => {
             console.log("Channel Fetching Error", err);
         }
 
-        let selectedMessageContent;
+        let selectedUserChannelContent;
         try {
             selectedUserChannelContent = await userChannelStatusService.findUserChannelStatusByUserIdChannelId(parseInt(userId), parseInt(channelInfo.channel_id));
             console.log("this is selectedUserChannelConetent", selectedUserChannelContent);
         } catch (err) {
             console.log("UserChannelStatus Fetching Error", err);
         }
-        // try {
+        try {
             if (selectedUserChannelContent) {
                 // exist
                 try {
@@ -739,10 +739,10 @@ const ChatController = () => {
                     console.log("UserChannelStatus Insertation Error", err);
                 }
             }
-        // } catch (err) {
-        //     return res.json(new responseObj("Internal Server Error", 500, false));
-        //     console.log("UserChannelUpdationError", err);
-        // }
+        } catch (err) {
+            return res.json(new responseObj("Internal Server Error", 500, false));
+            console.log("UserChannelUpdationError", err);
+        }
     }
 
 
