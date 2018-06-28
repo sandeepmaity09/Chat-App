@@ -16,10 +16,15 @@ const UserChannelStatusService = () => {
         return sequlize.query(`UPDATE chat_user_channel_status SET user_channel_status = ${userChannelStatus}, updated_at = "${getUTCDate()}" WHERE user_id = ${userId} AND channel_id = ${channelId}`, { type: sequlize.QueryTypes.UPDATE });
     }
 
+    const findUsersStatusByChannelIdAndList = (channelId, usersList) => {
+        return UserChannelStatus.findAll({ attributes:['user_id','user_channel_status'],where: { channel_id: channelId, user_id: usersList }, raw: true })
+    }
+
     return {
         createUserChannelStatus,
         findUserChannelStatusByUserIdChannelId,
-        updateUserChannelStatus
+        updateUserChannelStatus,
+        findUsersStatusByChannelIdAndList
     }
 }
 

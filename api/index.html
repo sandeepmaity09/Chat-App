@@ -90,9 +90,13 @@
 
             $('#userchannelstatus').submit(async function (er) {
                 er.preventDefault();
-                socket.emit('user_channel status', JSON.stringify({
-
+                console.log("called");
+                socket.emit('user channel status', JSON.stringify({
+                    user_id: "FxUp+f8AQ0iaKdP+bxOskQ==:TC6nH5dAXY7hvH9NbSCVOw==",
+                    user_status: "4VgSDjImV7OHSisptY1LRg==:Zb/dslWc3aLyOTng0iZ44Q==",
+                    channel_name: "yMdf1rAUCVSkkSE2ISGEVg==:KqJWorswFXmVdYVGX/OjUg=="
                 }))
+                return;
             })
 
             $('#deletemessage').submit(async function (e) {
@@ -109,6 +113,7 @@
                 socket.emit("delete message", JSON.stringify(data));
                 return;
             })
+
 
             $("#joinchannel").submit(async function (e) {
                 e.preventDefault();
@@ -423,6 +428,11 @@
             socket.on("msgandroid", function (data) {
                 console.log('this is msg android emit', data);
             })
+
+            socket.on('user channel', function (data) {
+                console.log('this is data user channel', data);
+            })
+
 
             // socket.on('send message', function (msgdata) {
             //     console.log('this is from send message', msgdata);
