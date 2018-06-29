@@ -17,14 +17,19 @@ const UserChannelStatusService = () => {
     }
 
     const findUsersStatusByChannelIdAndList = (channelId, usersList) => {
-        return UserChannelStatus.findAll({ attributes:['user_id','user_channel_status'],where: { channel_id: channelId, user_id: usersList }, raw: true })
+        return UserChannelStatus.findAll({ attributes: ['user_id', 'user_channel_status'], where: { channel_id: channelId, user_id: usersList }, raw: true })
+    }
+
+    const findUsersStatusByChannelIdAndListWithDevice = (channelId, usersList) => {
+        return UserChannelStatus.findAll({ attributes: ['user_id', 'user_channel_status'], where: { channel_id: channelId, user_id: usersList }, raw: true })
     }
 
     return {
         createUserChannelStatus,
         findUserChannelStatusByUserIdChannelId,
         updateUserChannelStatus,
-        findUsersStatusByChannelIdAndList
+        findUsersStatusByChannelIdAndList,
+        findUsersStatusByChannelIdAndListWithDevice
     }
 }
 

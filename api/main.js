@@ -126,6 +126,10 @@ const userChannelStatusService = require('../api/services/db/userChannelStatus.s
 const channelUsersService = require('../api/services/db/channelUsers.service')();
 const CONSTANTS = require('../api/helpers/chatConstants');
 
+/**
+ * Notification Controller
+ */
+const NotificationController = require('../api/controllers/NotificationController');
 
 
 app.get('/', function (req, res) {
@@ -139,6 +143,10 @@ app.get('/', function (req, res) {
 io.on('connection', async function (socket) {
     console.log('A new user connected', socket.id);
     console.log(getUTCDate());
+
+    socket.on("connection mapper", async function (data) {
+
+    })
     socket.send(JSON.stringify({
         socketID: socket.id,
         channelID: io.sockets.adapter.sids[socket.id]
@@ -478,6 +486,18 @@ io.on('connection', async function (socket) {
                                 message: updatedMessageInfo
                             }))
                         })
+
+
+
+                        // Notification Goes Here : Group Chat
+
+
+
+
+
+
+
+
                     } else {
                         let insertedMessageId;
                         let insertedMessageInfo;
@@ -550,6 +570,19 @@ io.on('connection', async function (socket) {
                                 message: insertedMessageInfo
                             }))
                         })
+
+
+
+
+                        // Notification Goes Here : Group Chat
+
+
+
+
+
+
+
+
                     }
                 } else {
                     // Original Text Message
@@ -623,6 +656,26 @@ io.on('connection', async function (socket) {
                                 message: updatedMessageInfo
                             }))
                         })
+
+
+                        // Notification Goes Here : Group Chat
+
+                        try {
+                            let NotifyUsersList = NotificationController.getNoticiationAndroidUsers(parseInt(channelInfo.channel_id));
+                            console.log(NotifyUsersList);
+                            _.forEach(NotifyUsersList, (item) => {
+                                NotificationController.sendMessageNotification(parseInt(item), updatedMessageInfo.message);
+                            })
+                        } catch (err) {
+                            console.log("Notification Error", err);
+                        }
+
+
+
+
+
+
+
                     } else {
                         let insertedMessageId;
                         let insertedMessageInfo;
@@ -689,6 +742,25 @@ io.on('connection', async function (socket) {
                                 message: insertedMessageInfo
                             }))
                         })
+
+
+                        // Notification Goes Here : Group Chat
+
+
+
+
+                        try {
+                            let NotifyUsersList = NotificationController.getNoticiationAndroidUsers(parseInt(channelInfo.channel_id));
+                            _.forEach(NotifyUsersList, (item) => {
+                                NotificationController.sendMessageNotification(parseInt(item), insertedMessageInfo.message);
+                            })
+                        } catch (err) {
+                            console.log("Notification Error", err);
+                        }
+
+
+
+
                     }
                 }
             } else if (messageType === CONSTANTS.MSG_TYPE_IMAGE) {
@@ -754,6 +826,14 @@ io.on('connection', async function (socket) {
                         message: multiMediaMessageInfo
                     }));
 
+
+                    // Notification Goes Here : Group Chat
+
+
+
+
+
+
                 } else {
                     console.log('Image Message');
                     console.log(messageInfo);
@@ -807,6 +887,14 @@ io.on('connection', async function (socket) {
                     io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                         message: multiMediaMessageInfo
                     }))
+
+
+                    // Notification Goes Here : Group Chat
+
+
+
+
+
                 }
             } else if (messageType === CONSTANTS.MSG_TYPE_AUDIO) {
                 console.log("Audio Message");
@@ -872,6 +960,14 @@ io.on('connection', async function (socket) {
                         message: multiMediaMessageInfo
                     }));
 
+
+                    // Notification Goes Here : Group Chat
+
+
+
+
+
+
                 } else {
                     console.log('Image Message');
                     console.log(messageInfo);
@@ -925,6 +1021,14 @@ io.on('connection', async function (socket) {
                     io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                         message: multiMediaMessageInfo
                     }))
+
+
+                    // Notification Goes Here : Group Chat
+
+
+
+
+
                 }
             } else if (messageType === CONSTANTS.MSG_TYPE_VIDEO) {
                 console.log("Video Message");
@@ -990,6 +1094,14 @@ io.on('connection', async function (socket) {
                         message: multiMediaMessageInfo
                     }))
 
+
+                    // Notification Goes Here : Group Chat
+
+
+
+
+
+
                 } else {
                     console.log('Image Message');
                     console.log(messageInfo);
@@ -1043,6 +1155,14 @@ io.on('connection', async function (socket) {
                     io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                         message: multiMediaMessageInfo
                     }));
+
+
+                    // Notification Goes Here : Group Chat
+
+
+
+
+
                 }
             } else if (messageType === CONSTANTS.MSG_TYPE_DOCS) {
                 let isReply = parseInt(messageInfo.parent_id);
@@ -1099,6 +1219,14 @@ io.on('connection', async function (socket) {
                     io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                         message: multiMediaMessageInfo
                     }));
+
+
+                    // Notification Goes Here : Group Chat
+
+
+
+
+
                 } else {
                     console.log('Image Message');
                     console.log(messageInfo);
@@ -1147,10 +1275,19 @@ io.on('connection', async function (socket) {
                     io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                         message: multiMediaMessageInfo
                     }));
+
+
+                    // Notification Goes Here : Group Chat
+
+
+
+
+
                 }
             }
         }
     })
+
 
 
     socket.on('user channel status', async function (data) {
@@ -1238,6 +1375,8 @@ io.on('connection', async function (socket) {
         }));
     })
 
+
+
     socket.on('user status', async function (data) {
         console.log('user status is called by ', socket.id);
         let messageInfo;
@@ -1315,6 +1454,8 @@ io.on('connection', async function (socket) {
         }
     })
 
+
+    
 
     socket.on('delete message', async function (data) {
         console.log('delete message is called by ', socket.id);
