@@ -14,7 +14,7 @@ const UnreadMessagesService = () => {
     }
 
     const insertUnreadMessage = (userId, channelId, messageId) => {
-        return sequlize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(messageId)},${parseInt(userId)},${parseInt(channelId)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}"`)
+        return sequlize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(messageId)},${parseInt(userId)},${parseInt(channelId)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`)
     }
     return {
         findUnreadMessageByUserIdChannelId,
