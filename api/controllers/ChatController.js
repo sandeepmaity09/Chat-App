@@ -749,6 +749,83 @@ const ChatController = () => {
         }
     }
 
+    /**
+     * Used for update the last message according to channel to user so we can handle unread and read list
+     */
+    async function updateLastMessage(req, res) {
+
+        let messageId = req.body.message_id;
+        let userId = req.body.user_id;
+        let channelName = req.body.channel_name;
+
+        if (!userId) {
+            return res.json(new responseObj('user_id not provided, BAD REQUEST', 400, false));
+        }
+
+        if (!channelName) {
+            return res.json(new responseObj('channel_name not provided, BAD REQUEST', 400, false));
+        }
+
+        if (!messageId) {
+            return res.json(new responseObj('message_id not provided, BAD REQUEST', 400, false));
+        }
+
+        try {
+            messageId = Encrypter.aesDecryption(key, messageId);
+            userId = Encrypter.aesDecryption(key, userId);
+            channelName = Encrypter.aesDecryption(key, channelName);
+        } catch (err) {
+            console.log("Decryption Error", err);
+        }
+        let channelInfo;
+        try {
+            channelInfo = await channelsService.findChannel({ channel_name: channelName });
+        } catch (err) {
+            console.log("Channel Fetching Error", err);
+        }
+
+        try {
+            // get the unreadMessageInfo
+            let unreadMessageInfo;
+            try {
+                let unreadMessageContent = await unreadMessagesService.findUnreadMessageByUserIdChannelId(parseInt(userId), parseInt(channelInfo.channel_id));
+                // console.log("unreadMessageContent", unreadMessageContent);
+                unreadMessageInfo = unreadMessageContent;
+            } catch (err) {
+                console.log("UnreadMessageContent Error", err);
+            }
+            if (unreadMessageInfo) {
+                // update doc exist
+                try {
+                    let updatedUnreadMessageContent = await unreadMessagesService.updateUnreadMessage(parseInt(unreadMessageInfo.unread_id), parseInt(messageId));
+                } catch (err) {
+                    console.log("UpdatedUnreadMessageContentError", err);
+                }
+            } else {
+                // insert new doc
+                try {
+                    let insertUnreadMessageContent = await unreadMessagesService.insertUnreadMessage(parseInt(userId), parseInt(channelInfo.channel_id), parseInt(messageId));
+                } catch (err) {
+                    console.log("InsertedUnreadMessageContent", err);
+                }
+            }
+            try {
+                let unreadMessageContent = await unreadMessagesService.findUnreadMessageByUserIdChannelId(parseInt(userId), parseInt(channelInfo.channel_id));
+                // console.log("unreadMessageContent", unreadMessageContent);
+                unreadMessageInfo = unreadMessageContent;
+            } catch (err) {
+                console.log("UnreadMessageContent Error", err);
+            }
+            unreadMessageInfo = Encrypter.aesEncryption(key, JSON.stringify(unreadMessageInfo));
+            return res.json(new responseObj("Successsfully Updated", 200, true, unreadMessageInfo));
+        } catch (err) {
+            console.log("Final Error", err);
+            return res.json(new responseObj("Internal Server Error", 500, false));
+        }
+
+
+
+    }
 
 
     return {
@@ -762,7 +839,8 @@ const ChatController = () => {
         aesDecryptor,
         setUserStatus,
         setUserChannelStatus,
-        readChatHistory
+        readChatHistory,
+        updateLastMessage
     }
 }
 
