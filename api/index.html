@@ -72,15 +72,15 @@
         // console.log(aesEncryption);
 
         // SERVER
-        // const FETCH_URL_ENCRYPT = "http://h2777857.stratoserver.net:3000/inrchat/chatservice/encrypt";
-        // const FETCH_URL_DECRYPT = "http://h2777857.stratoserver.net:3000/inrchat/chatservice/decrypt";
-        // const HOST = "http://h2777857.stratoserver.net:3000/";
+        const FETCH_URL_ENCRYPT = "http://h2777857.stratoserver.net:3000/inrchat/chatservice/encrypt";
+        const FETCH_URL_DECRYPT = "http://h2777857.stratoserver.net:3000/inrchat/chatservice/decrypt";
+        const HOST = "http://h2777857.stratoserver.net:3000/";
 
 
         // LOCALHOST
-        const FETCH_URL_ENCRYPT = "http://localhost:3000/inrchat/chatservice/encrypt";
-        const FETCH_URL_DECRYPT = "http://localhost:3000/inrchat/chatservice/decrypt";
-        const HOST = "http://localhost:3000/";
+        // const FETCH_URL_ENCRYPT = "http://localhost:3000/inrchat/chatservice/encrypt";
+        // const FETCH_URL_DECRYPT = "http://localhost:3000/inrchat/chatservice/decrypt";
+        // const HOST = "http://localhost:3000/";
 
         $(function () {
 
@@ -433,6 +433,9 @@
                 console.log('this is data user channel', data);
             })
 
+            socket.on('channel status', function (data) {
+                console.log('this is channel status data', data);
+            })
 
             // socket.on('send message', function (msgdata) {
             //     console.log('this is from send message', msgdata);

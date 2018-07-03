@@ -144,9 +144,6 @@ io.on('connection', async function (socket) {
     console.log('A new user connected', socket.id);
     console.log(getUTCDate());
 
-    socket.on("connection mapper", async function (data) {
-
-    })
     socket.send(JSON.stringify({
         socketID: socket.id,
         channelID: io.sockets.adapter.sids[socket.id]
@@ -209,20 +206,24 @@ io.on('connection', async function (socket) {
     socket.on("switch channel", async function (channeldata) {
         console.log('switch channel called by socket user', socket.id);
         console.log('this is data received at switch channel', channeldata);
+
         let channelInfo;
         try {
             channelInfo = JSON.parse(channeldata);
         } catch (err) {
             console.log("Parsing Error", err);
         }
+
         let channelName = channelInfo.channel_name;
         let userId = channelInfo.user_id;
+
         try {
             channelName = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, channelName);
             userId = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, userId);
         } catch (err) {
             console.log("Decryption Error", err);
         }
+
         let channelContent;
         try {
             let channelContentList = await channelsService.findOrCreateChannel({ channel_name: channelName });
@@ -234,39 +235,40 @@ io.on('connection', async function (socket) {
         }
 
 
-        let selectedUserChannelContent;
-        try {
-            selectedUserChannelContent = await userChannelStatusService.findUserChannelStatusByUserIdChannelId(parseInt(userId), parseInt(channelContent.channel_id));
-            console.log("this is selectedUserChannelConetent", selectedUserChannelContent);
-        } catch (err) {
-            console.log("UserChannelStatus Fetching Error", err);
-        }
-        try {
-            if (selectedUserChannelContent) {
-                // exist
-                try {
-                    let updatedUserChannelStatusContent = await userChannelStatusService.updateUserChannelStatus(parseInt(userId), parseInt(channelContent.channel_id), parseInt('1'));
-                } catch (err) {
-                    console.log("UserChannelStatus Updation Error", err);
-                }
-            } else {
-                // not exist
-                try {
-                    userchannelobj = {
-                        user_id: parseInt(userId),
-                        channel_id: parseInt(channelContent.channel_id),
-                        user_channel_status: parseInt('1')
-                    }
-                    let insertedUserChannelContent = await userChannelStatusService.createUserChannelStatus(userchannelobj);
-                    if (insertedUserChannelContent) {
-                    }
-                } catch (err) {
-                    console.log("UserChannelStatus Insertation Error", err);
-                }
-            }
-        } catch (err) {
-            console.log("UserChannelUpdationError", err);
-        }
+        // let selectedUserChannelContent;
+        // try {
+        //     selectedUserChannelContent = await userChannelStatusService.findUserChannelStatusByUserIdChannelId(parseInt(userId), parseInt(channelContent.channel_id));
+        //     console.log("this is selectedUserChannelConetent", selectedUserChannelContent);
+        // } catch (err) {
+        //     console.log("UserChannelStatus Fetching Error", err);
+        // }
+        // try {
+        //     if (selectedUserChannelContent) {
+        //         // exist
+        //         try {
+        //             let updatedUserChannelStatusContent = await userChannelStatusService.updateUserChannelStatus(parseInt(userId), parseInt(channelContent.channel_id), parseInt('1'));
+        //         } catch (err) {
+        //             console.log("UserChannelStatus Updation Error", err);
+        //         }
+        //     } else {
+        //         // not exist
+        //         try {
+        //             userchannelobj = {
+        //                 user_id: parseInt(userId),
+        //                 channel_id: parseInt(channelContent.channel_id),
+        //                 user_channel_status: parseInt('1')
+        //             }
+        //             let insertedUserChannelContent = await userChannelStatusService.createUserChannelStatus(userchannelobj);
+        //             if (insertedUserChannelContent) {
+        //             }
+        //         } catch (err) {
+        //             console.log("UserChannelStatus Insertation Error", err);
+        //         }
+        //     }
+        // } catch (err) {
+        //     console.log("UserChannelUpdationError", err);
+        // }
+
         // console.log("bhut sara data", io.sockets.adapter.sids[socket.id]);
         _.forEach(io.sockets.adapter.sids[socket.id], (item, value) => {
             if (value == socket.id || value == channelContent.channel_id) {
@@ -282,6 +284,71 @@ io.on('connection', async function (socket) {
             socketID: socket.id,
             channelID: io.sockets.adapter.sids[socket.id]
         }));
+
+
+        // Connection Mapper
+        let userMapperInfo;
+        try {
+            let userMapperContent = await sequelize.query(`SELECT * FROM chat_user_channel_status WHERE user_id = ${parseInt(userId)} AND channel_id = ${parseInt(channelContent.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+            // console.log('this is userMapperContent', userMapperContent);
+            if (userMapperContent.length) {
+                userMapperInfo = userMapperContent[0];
+            }
+        } catch (err) {
+            console.log("Mapping Error", err);
+        }
+
+        if (userMapperInfo) {
+            // update entry
+            try {
+                let userSocketUpdateContent = await sequelize.query(`UPDATE chat_user_channel_status SET socket_id = "${socket.id}",user_channel_status = ${parseInt('1')}, updated_at = "${getUTCDate()}" WHERE user_id = ${parseInt(userId)} AND channel_id = ${parseInt(channelContent.channel_id)} `, { type: sequelize.QueryTypes.UPDATE });
+            } catch (err) {
+                console.log("Updation Error", err);
+            }
+        } else {
+            // new entry
+            try {
+                let userSocketInsertContent = await sequelize.query(`INSERT INTO chat_user_channel_status(user_id, channel_id, socket_id, user_channel_status, userchannel_status, created_at, updated_at) VALUES(${userId}, ${parseInt(channelContent.channel_id)}, "${socket.id}", ${parseInt('1')}, ${parseInt('1')}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT });
+                // console.log("userSocketInsertContent", userSocketInsertContent);
+            } catch (err) {
+                console.log("Insertation Error", err);
+            }
+        }
+
+        try {
+            let userMapperContent = await sequelize.query(`SELECT * FROM chat_user_channel_status WHERE user_id = ${parseInt(userId)} AND channel_id = ${parseInt(channelContent.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+            console.log(userMapperContent);
+            if (userMapperContent.length) {
+                userMapperInfo = userMapperContent[0];
+            }
+            console.log("this is final userMapperInfo", userMapperInfo);
+        } catch (err) {
+            console.log("Selection Error", err);
+        }
+
+
+        let channelUsersList;
+        try {
+            channelUsersList = await sequelize.query(`SELECT user_id,user_channel_status FROM chat_user_channel_status WHERE channel_id = ${parseInt(channelContent.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+            console.log("ChannelUsersContent", channelUsersList);
+        } catch (err) {
+            console.log("ChannelUsersContent Error", err);
+        }
+
+        // io.in(channelContent.channel_id).emit('channel status', JSON.stringify({
+        //     channel_name: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, channelContent.channel_name.toString()),
+        //     channel_users: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(channelUsersList))
+        // }))
+
+        // io.in(parseInt(channelContent.channel_id)).emit('channel status', JSON.stringify({
+        //     channel_name: channelContent.channel_name.toString(),
+        //     channel_users: channelUsersList
+        // }))
+
+        io.in(parseInt(channelContent.channel_id)).emit('channel status', JSON.stringify({
+            channel_name: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, channelContent.channel_name.toString()),
+            channel_users: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(channelUsersList))
+        }))
     })
 
 
@@ -316,40 +383,106 @@ io.on('connection', async function (socket) {
             console.log('this is error from channelContent', err);
         }
 
-        let selectedUserChannelContent;
+
+
+        // user mapper info
+
+        // Connection Mapper
+        let userMapperInfo;
         try {
-            selectedUserChannelContent = await userChannelStatusService.findUserChannelStatusByUserIdChannelId(parseInt(userId), parseInt(channelContent.channel_id));
-            console.log("this is selectedUserChannelConetent", selectedUserChannelContent);
-        } catch (err) {
-            console.log("UserChannelStatus Fetching Error", err);
-        }
-        try {
-            if (selectedUserChannelContent) {
-                // exist
-                try {
-                    let updatedUserChannelStatusContent = await userChannelStatusService.updateUserChannelStatus(parseInt(userId), parseInt(channelContent.channel_id), parseInt('0'));
-                } catch (err) {
-                    console.log("UserChannelStatus Updation Error", err);
-                }
-            } else {
-                // not exist
-                try {
-                    userchannelobj = {
-                        user_id: parseInt(userId),
-                        channel_id: parseInt(channelContent.channel_id),
-                        user_channel_status: parseInt('0')
-                    }
-                    let insertedUserChannelContent = await userChannelStatusService.createUserChannelStatus(userchannelobj);
-                    if (insertedUserChannelContent) {
-                    }
-                } catch (err) {
-                    console.log("UserChannelStatus Insertation Error", err);
-                }
+            let userMapperContent = await sequelize.query(`SELECT * FROM chat_user_channel_status WHERE user_id = ${parseInt(userId)} AND channel_id = ${parseInt(channelContent.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+            // console.log('this is userMapperContent', userMapperContent);
+            if (userMapperContent.length) {
+                userMapperInfo = userMapperContent[0];
             }
         } catch (err) {
-            console.log("UserChannelUpdationError", err);
+            console.log("Mapping Error", err);
         }
 
+        if (userMapperInfo) {
+            // update entry
+            try {
+                let userSocketUpdateContent = await sequelize.query(`UPDATE chat_user_channel_status SET socket_id = "${socket.id}",user_channel_status = ${parseInt('0')}, updated_at = "${getUTCDate()}" WHERE user_id = ${parseInt(userId)} AND channel_id = ${parseInt(channelContent.channel_id)} `, { type: sequelize.QueryTypes.UPDATE });
+            } catch (err) {
+                console.log("Updation Error", err);
+            }
+        } else {
+            // new entry
+            try {
+                let userSocketInsertContent = await sequelize.query(`INSERT INTO chat_user_channel_status(user_id, channel_id, socket_id, user_channel_status, userchannel_status, created_at, updated_at) VALUES(${userId}, ${parseInt(channelContent.channel_id)}, "${socket.id}", ${parseInt('0')}, ${parseInt('1')}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT });
+                // console.log("userSocketInsertContent", userSocketInsertContent);
+            } catch (err) {
+                console.log("Insertation Error", err);
+            }
+        }
+
+        try {
+            let userMapperContent = await sequelize.query(`SELECT * FROM chat_user_channel_status WHERE user_id = ${parseInt(userId)} AND channel_id = ${parseInt(channelContent.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+            console.log(userMapperContent);
+            if (userMapperContent.length) {
+                userMapperInfo = userMapperContent[0];
+            }
+            console.log("this is final userMapperInfo", userMapperInfo);
+        } catch (err) {
+            console.log("Selection Error", err);
+        }
+
+
+
+        let channelUsersList;
+        try {
+            channelUsersList = await sequelize.query(`SELECT user_id,user_channel_status FROM chat_user_channel_status WHERE channel_id = ${parseInt(channelContent.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+            console.log("ChannelUsersContent", channelUsersList);
+        } catch (err) {
+            console.log("ChannelUsersContent Error", err);
+        }
+
+
+
+        // io.in(parseInt(channelContent.channel_id)).emit('channel status', JSON.stringify({
+        //     channel_name: channelContent.channel_name.toString(),
+        //     channel_users: channelUsersList
+        // }))
+
+
+        io.in(parseInt(channelContent.channel_id)).emit('channel status', JSON.stringify({
+            channel_name: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, channelContent.channel_name.toString()),
+            channel_users: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(channelUsersList))
+        }))
+
+        // let selectedUserChannelContent;
+        // try {
+        //     selectedUserChannelContent = await userChannelStatusService.findUserChannelStatusByUserIdChannelId(parseInt(userId), parseInt(channelContent.channel_id));
+        //     console.log("this is selectedUserChannelConetent", selectedUserChannelContent);
+        // } catch (err) {
+        //     console.log("UserChannelStatus Fetching Error", err);
+        // }
+        // try {
+        //     if (selectedUserChannelContent) {
+        //         // exist
+        //         try {
+        //             let updatedUserChannelStatusContent = await userChannelStatusService.updateUserChannelStatus(parseInt(userId), parseInt(channelContent.channel_id), parseInt('0'));
+        //         } catch (err) {
+        //             console.log("UserChannelStatus Updation Error", err);
+        //         }
+        //     } else {
+        //         // not exist
+        //         try {
+        //             userchannelobj = {
+        //                 user_id: parseInt(userId),
+        //                 channel_id: parseInt(channelContent.channel_id),
+        //                 user_channel_status: parseInt('0')
+        //             }
+        //             let insertedUserChannelContent = await userChannelStatusService.createUserChannelStatus(userchannelobj);
+        //             if (insertedUserChannelContent) {
+        //             }
+        //         } catch (err) {
+        //             console.log("UserChannelStatus Insertation Error", err);
+        //         }
+        //     }
+        // } catch (err) {
+        //     console.log("UserChannelUpdationError", err);
+        // }
         socket.leave(channelContent.channel_id);
     })
 
@@ -414,20 +547,20 @@ io.on('connection', async function (socket) {
                         let updatedMessageInfo;
                         let replyMessageInfo;
                         try {
-                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                             insertedMessageInfo = insertedMessageContent[0];
                         } catch (err) {
                             console.log("Insertation Error", err);
                         }
 
                         try {
-                            let updatedMessageContent = await sequelize.query(`UPDATE chat_messages SET message="${messageInfo.message}",is_edited=${parseInt(messageInfo.is_edited)},updated_at="${getUTCDate()}" WHERE message_id=${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                            let updatedMessageContent = await sequelize.query(`UPDATE chat_messages SET message = "${messageInfo.message}", is_edited = ${parseInt(messageInfo.is_edited)}, updated_at = "${getUTCDate()}" WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.UPDATE });
                         } catch (err) {
                             console.log("Updateion Error", err);
                         }
 
                         try {
-                            let updatedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            let updatedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                             updatedMessageInfo = updatedMessageContent[0];
                         } catch (err) {
                             console.log("Insertation Error", err);
@@ -436,7 +569,7 @@ io.on('connection', async function (socket) {
                         updatedMessageInfo.channel_name = channelInfo.channel_name;
 
                         try {
-                            let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)} `, { type: sequelize.QueryTypes.SELECT });
                             replyMessageInfo = replyMessageContent[0];
                         } catch (err) {
                             console.log("Database Selection Error", err);
@@ -445,20 +578,20 @@ io.on('connection', async function (socket) {
                         // Unread code Here
 
                         try {
-                            let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(messageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(messageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)} `, { type: sequelize.QueryTypes.SELECT });
                             // console.log("unreadMessageSelectionContent", unreadMessageSelectionContent)
                             if (unreadMessageSelectionContent.length) {
                                 // unread exist
                                 // update the unread 
                                 try {
-                                    let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(updatedMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                                    let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(updatedMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)} `, { type: sequelize.QueryTypes.UPDATE });
                                 } catch (err) {
                                     console.log("Updation Error", err);
                                 }
                             } else {
                                 // unread not exist
                                 try {
-                                    let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(updatedMessageInfo.message_id)},${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
+                                    let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id, user_id, channel_id, unread_status, created_at, updated_at) VALUES(${parseInt(updatedMessageInfo.message_id)}, ${parseInt(messageInfo.user_id)}, ${parseInt(channelInfo.channel_id)}, ${parseInt('1')}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                                 } catch (err) {
                                     console.log("Insertation Error", err);
                                 }
@@ -505,13 +638,13 @@ io.on('connection', async function (socket) {
                         try {
                             messageInfo.is_flagged = 0;
                             messageInfo.message_status = 1;
-                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,filelink,thumbnail,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},"","",${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
+                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id, channel_id, chat_type, message_type, message, parent_id, filelink, thumbnail, is_edited, is_flagged, message_status, created_at, updated_at) VALUES(${parseInt(messageInfo.user_id)}, ${parseInt(channelInfo.channel_id)}, ${parseInt(messageInfo.chat_type)}, ${parseInt(messageInfo.message_type)}, "${messageInfo.message}", ${parseInt(messageInfo.parent_id)}, "", "", ${parseInt(messageInfo.is_edited)}, ${parseInt(messageInfo.is_flagged)}, ${parseInt(messageInfo.message_status)}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                             insertedMessageId = insertedMessageContent;
                         } catch (err) {
                             console.log("Insertation Error", err);
                         }
                         try {
-                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
+                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)} `, { type: sequelize.QueryTypes.SELECT });
                             if (insertedMessageContent.length) {
                                 insertedMessageInfo = insertedMessageContent[0];
                             }
@@ -521,7 +654,7 @@ io.on('connection', async function (socket) {
                         delete insertedMessageInfo.channel_id;
                         insertedMessageInfo.channel_name = channelInfo.channel_name;
                         try {
-                            let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)} `, { type: sequelize.QueryTypes.SELECT });
                             replyMessageInfo = replyMessageContent[0];
                         } catch (err) {
                             console.log("Database Selection Error", err);
@@ -530,20 +663,20 @@ io.on('connection', async function (socket) {
                         // unread code here : original
 
                         try {
-                            let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(messageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(messageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)} `, { type: sequelize.QueryTypes.SELECT });
                             // console.log("unreadMessageSelectionContent", unreadMessageSelectionContent)
                             if (unreadMessageSelectionContent.length) {
                                 // unread exist
                                 // update the unread 
                                 try {
-                                    let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(insertedMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                                    let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(insertedMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)} `, { type: sequelize.QueryTypes.UPDATE });
                                 } catch (err) {
                                     console.log("Updation Error", err);
                                 }
                             } else {
                                 // unread not exist
                                 try {
-                                    let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(insertedMessageInfo.message_id)},${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
+                                    let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id, user_id, channel_id, unread_status, created_at, updated_at) VALUES(${parseInt(insertedMessageInfo.message_id)}, ${parseInt(messageInfo.user_id)}, ${parseInt(channelInfo.channel_id)}, ${parseInt('1')}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                                 } catch (err) {
                                     console.log("Insertation Error", err);
                                 }
@@ -592,20 +725,20 @@ io.on('connection', async function (socket) {
                         let insertedMessageInfo;
                         let updatedMessageInfo;
                         try {
-                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                             insertedMessageInfo = insertedMessageContent[0];
                         } catch (err) {
                             console.log("Insertation Error", err);
                         }
 
                         try {
-                            let updatedMessageContent = await sequelize.query(`UPDATE chat_messages SET message="${messageInfo.message}",is_edited=${parseInt(messageInfo.is_edited)},updated_at="${getUTCDate()}" WHERE message_id=${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                            let updatedMessageContent = await sequelize.query(`UPDATE chat_messages SET message = "${messageInfo.message}", is_edited = ${parseInt(messageInfo.is_edited)}, updated_at = "${getUTCDate()}" WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.UPDATE });
                         } catch (err) {
                             console.log("Updateion Error", err);
                         }
 
                         try {
-                            let updatedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            let updatedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                             updatedMessageInfo = updatedMessageContent[0];
                         } catch (err) {
                             console.log("Insertation Error", err);
@@ -614,20 +747,20 @@ io.on('connection', async function (socket) {
                         // Unread Code here
 
                         try {
-                            let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(messageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(messageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)} `, { type: sequelize.QueryTypes.SELECT });
                             // console.log("unreadMessageSelectionContent", unreadMessageSelectionContent)
                             if (unreadMessageSelectionContent.length) {
                                 // unread exist
                                 // update the unread 
                                 try {
-                                    let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(updatedMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                                    let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(updatedMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)} `, { type: sequelize.QueryTypes.UPDATE });
                                 } catch (err) {
                                     console.log("Updation Error", err);
                                 }
                             } else {
                                 // unread not exist
                                 try {
-                                    let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(updatedMessageInfo.message_id)},${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
+                                    let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id, user_id, channel_id, unread_status, created_at, updated_at) VALUES(${parseInt(updatedMessageInfo.message_id)}, ${parseInt(messageInfo.user_id)}, ${parseInt(channelInfo.channel_id)}, ${parseInt('1')}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                                 } catch (err) {
                                     console.log("Insertation Error", err);
                                 }
@@ -682,13 +815,13 @@ io.on('connection', async function (socket) {
                         try {
                             messageInfo.is_flagged = 0;
                             messageInfo.message_status = 1;
-                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id,channel_id,chat_type,message_type,message,parent_id,filelink,thumbnail,is_edited,is_flagged,message_status,created_at,updated_at) VALUES(${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt(messageInfo.chat_type)},${parseInt(messageInfo.message_type)},"${messageInfo.message}",${parseInt(messageInfo.parent_id)},"","",${parseInt(messageInfo.is_edited)},${parseInt(messageInfo.is_flagged)},${parseInt(messageInfo.message_status)},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
+                            let insertedMessageContent = await sequelize.query(`INSERT INTO chat_messages(user_id, channel_id, chat_type, message_type, message, parent_id, filelink, thumbnail, is_edited, is_flagged, message_status, created_at, updated_at) VALUES(${parseInt(messageInfo.user_id)}, ${parseInt(channelInfo.channel_id)}, ${parseInt(messageInfo.chat_type)}, ${parseInt(messageInfo.message_type)}, "${messageInfo.message}", ${parseInt(messageInfo.parent_id)}, "", "", ${parseInt(messageInfo.is_edited)}, ${parseInt(messageInfo.is_flagged)}, ${parseInt(messageInfo.message_status)}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                             insertedMessageId = insertedMessageContent;
                         } catch (err) {
                             console.log("Insertation Error", err);
                         }
                         try {
-                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)}`, { type: sequelize.QueryTypes.SELECT });
+                            let insertedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(insertedMessageId)} `, { type: sequelize.QueryTypes.SELECT });
                             if (insertedMessageContent.length) {
                                 insertedMessageInfo = insertedMessageContent[0];
                             }
@@ -699,20 +832,20 @@ io.on('connection', async function (socket) {
                         // unread code here : original
 
                         try {
-                            let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(messageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+                            let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(messageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)} `, { type: sequelize.QueryTypes.SELECT });
                             // console.log("unreadMessageSelectionContent", unreadMessageSelectionContent)
                             if (unreadMessageSelectionContent.length) {
                                 // unread exist
                                 // update the unread 
                                 try {
-                                    let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(insertedMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                                    let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(insertedMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)} `, { type: sequelize.QueryTypes.UPDATE });
                                 } catch (err) {
                                     console.log("Updation Error", err);
                                 }
                             } else {
                                 // unread not exist
                                 try {
-                                    let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(insertedMessageInfo.message_id)},${parseInt(messageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
+                                    let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id, user_id, channel_id, unread_status, created_at, updated_at) VALUES(${parseInt(insertedMessageInfo.message_id)}, ${parseInt(messageInfo.user_id)}, ${parseInt(channelInfo.channel_id)}, ${parseInt('1')}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                                 } catch (err) {
                                     console.log("Insertation Error", err);
                                 }
@@ -772,14 +905,14 @@ io.on('connection', async function (socket) {
                     let replyMessageInfo;
 
                     try {
-                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
                     } catch (err) {
                         console.log("Database Selection Error", err);
                     }
 
                     try {
-                        let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)} `, { type: sequelize.QueryTypes.SELECT });
                         console.log("this is replyMessageContent", replyMessageContent);
                         replyMessageInfo = replyMessageContent[0];
                     } catch (err) {
@@ -788,20 +921,20 @@ io.on('connection', async function (socket) {
 
                     // unread code here
                     try {
-                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)} `, { type: sequelize.QueryTypes.SELECT });
                         // console.log("unreadMessageSelectionContent", unreadMessageSelectionContent)
                         if (unreadMessageSelectionContent.length) {
                             // unread exist
                             // update the unread 
                             try {
-                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)} `, { type: sequelize.QueryTypes.UPDATE });
                             } catch (err) {
                                 console.log("Updation Error", err);
                             }
                         } else {
                             // unread not exist
                             try {
-                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)},${parseInt(multiMediaMessageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
+                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id, user_id, channel_id, unread_status, created_at, updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)}, ${parseInt(multiMediaMessageInfo.user_id)}, ${parseInt(channelInfo.channel_id)}, ${parseInt('1')}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                             } catch (err) {
                                 console.log("Insertation Error", err);
                             }
@@ -839,7 +972,7 @@ io.on('connection', async function (socket) {
                     console.log(messageInfo);
                     let multiMediaMessageInfo;
                     try {
-                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
                     } catch (err) {
                         console.log("Database Selection Error", err);
@@ -848,20 +981,20 @@ io.on('connection', async function (socket) {
                     // unread message here
 
                     try {
-                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)} `, { type: sequelize.QueryTypes.SELECT });
                         // console.log("unreadMessageSelectionContent", unreadMessageSelectionContent)
                         if (unreadMessageSelectionContent.length) {
                             // unread exist
                             // update the unread 
                             try {
-                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)} `, { type: sequelize.QueryTypes.UPDATE });
                             } catch (err) {
                                 console.log("Updation Error", err);
                             }
                         } else {
                             // unread not exist
                             try {
-                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)},${parseInt(multiMediaMessageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
+                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id, user_id, channel_id, unread_status, created_at, updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)}, ${parseInt(multiMediaMessageInfo.user_id)}, ${parseInt(channelInfo.channel_id)}, ${parseInt('1')}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                             } catch (err) {
                                 console.log("Insertation Error", err);
                             }
@@ -905,14 +1038,14 @@ io.on('connection', async function (socket) {
                     let replyMessageInfo;
 
                     try {
-                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
                     } catch (err) {
                         console.log("Database Selection Error", err);
                     }
 
                     try {
-                        let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)} `, { type: sequelize.QueryTypes.SELECT });
                         console.log("this is replyMessageContent", replyMessageContent);
                         replyMessageInfo = replyMessageContent[0];
                     } catch (err) {
@@ -922,20 +1055,20 @@ io.on('connection', async function (socket) {
                     // unread code herer
 
                     try {
-                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)} `, { type: sequelize.QueryTypes.SELECT });
                         // console.log("unreadMessageSelectionContent", unreadMessageSelectionContent)
                         if (unreadMessageSelectionContent.length) {
                             // unread exist
                             // update the unread 
                             try {
-                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)} `, { type: sequelize.QueryTypes.UPDATE });
                             } catch (err) {
                                 console.log("Updation Error", err);
                             }
                         } else {
                             // unread not exist
                             try {
-                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)},${parseInt(multiMediaMessageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
+                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id, user_id, channel_id, unread_status, created_at, updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)}, ${parseInt(multiMediaMessageInfo.user_id)}, ${parseInt(channelInfo.channel_id)}, ${parseInt('1')}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                             } catch (err) {
                                 console.log("Insertation Error", err);
                             }
@@ -973,7 +1106,7 @@ io.on('connection', async function (socket) {
                     console.log(messageInfo);
                     let multiMediaMessageInfo;
                     try {
-                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
                     } catch (err) {
                         console.log("Database Selection Error", err);
@@ -982,20 +1115,20 @@ io.on('connection', async function (socket) {
                     // unread code here
 
                     try {
-                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)} `, { type: sequelize.QueryTypes.SELECT });
                         // console.log("unreadMessageSelectionContent", unreadMessageSelectionContent)
                         if (unreadMessageSelectionContent.length) {
                             // unread exist
                             // update the unread 
                             try {
-                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)} `, { type: sequelize.QueryTypes.UPDATE });
                             } catch (err) {
                                 console.log("Updation Error", err);
                             }
                         } else {
                             // unread not exist
                             try {
-                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)},${parseInt(multiMediaMessageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
+                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id, user_id, channel_id, unread_status, created_at, updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)}, ${parseInt(multiMediaMessageInfo.user_id)}, ${parseInt(channelInfo.channel_id)}, ${parseInt('1')}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                             } catch (err) {
                                 console.log("Insertation Error", err);
                             }
@@ -1039,14 +1172,14 @@ io.on('connection', async function (socket) {
                     let replyMessageInfo;
 
                     try {
-                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
                     } catch (err) {
                         console.log("Database Selection Error", err);
                     }
 
                     try {
-                        let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)} `, { type: sequelize.QueryTypes.SELECT });
                         console.log("this is replyMessageContent", replyMessageContent);
                         replyMessageInfo = replyMessageContent[0];
                     } catch (err) {
@@ -1056,20 +1189,20 @@ io.on('connection', async function (socket) {
                     // unread code herer
 
                     try {
-                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)} `, { type: sequelize.QueryTypes.SELECT });
                         // console.log("unreadMessageSelectionContent", unreadMessageSelectionContent)
                         if (unreadMessageSelectionContent.length) {
                             // unread exist
                             // update the unread 
                             try {
-                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)} `, { type: sequelize.QueryTypes.UPDATE });
                             } catch (err) {
                                 console.log("Updation Error", err);
                             }
                         } else {
                             // unread not exist
                             try {
-                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)},${parseInt(multiMediaMessageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
+                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id, user_id, channel_id, unread_status, created_at, updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)}, ${parseInt(multiMediaMessageInfo.user_id)}, ${parseInt(channelInfo.channel_id)}, ${parseInt('1')}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                             } catch (err) {
                                 console.log("Insertation Error", err);
                             }
@@ -1107,7 +1240,7 @@ io.on('connection', async function (socket) {
                     console.log(messageInfo);
                     let multiMediaMessageInfo;
                     try {
-                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
                     } catch (err) {
                         console.log("Database Selection Error", err);
@@ -1116,20 +1249,20 @@ io.on('connection', async function (socket) {
                     // unread code hrer
 
                     try {
-                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)} `, { type: sequelize.QueryTypes.SELECT });
                         // console.log("unreadMessageSelectionContent", unreadMessageSelectionContent)
                         if (unreadMessageSelectionContent.length) {
                             // unread exist
                             // update the unread 
                             try {
-                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)} `, { type: sequelize.QueryTypes.UPDATE });
                             } catch (err) {
                                 console.log("Updation Error", err);
                             }
                         } else {
                             // unread not exist
                             try {
-                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)},${parseInt(multiMediaMessageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
+                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id, user_id, channel_id, unread_status, created_at, updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)}, ${parseInt(multiMediaMessageInfo.user_id)}, ${parseInt(channelInfo.channel_id)}, ${parseInt('1')}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                             } catch (err) {
                                 console.log("Insertation Error", err);
                             }
@@ -1171,13 +1304,13 @@ io.on('connection', async function (socket) {
                     let multiMediaMessageInfo;
                     let replyMessageInfo;
                     try {
-                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
                     } catch (err) {
                         console.log("Database Selection Error", err);
                     }
                     try {
-                        let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let replyMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.parent_id)} `, { type: sequelize.QueryTypes.SELECT });
                         console.log("this is replyMessageContent", replyMessageContent);
                         replyMessageInfo = replyMessageContent[0];
                     } catch (err) {
@@ -1185,20 +1318,20 @@ io.on('connection', async function (socket) {
                     }
                     // unread code here
                     try {
-                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)} `, { type: sequelize.QueryTypes.SELECT });
                         // console.log("unreadMessageSelectionContent", unreadMessageSelectionContent)
                         if (unreadMessageSelectionContent.length) {
                             // unread exist
                             // update the unread 
                             try {
-                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)} `, { type: sequelize.QueryTypes.UPDATE });
                             } catch (err) {
                                 console.log("Updation Error", err);
                             }
                         } else {
                             // unread not exist
                             try {
-                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)},${parseInt(multiMediaMessageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
+                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id, user_id, channel_id, unread_status, created_at, updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)}, ${parseInt(multiMediaMessageInfo.user_id)}, ${parseInt(channelInfo.channel_id)}, ${parseInt('1')}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                             } catch (err) {
                                 console.log("Insertation Error", err);
                             }
@@ -1232,27 +1365,27 @@ io.on('connection', async function (socket) {
                     console.log(messageInfo);
                     let multiMediaMessageInfo;
                     try {
-                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
                     } catch (err) {
                         console.log("Database Selection Error", err);
                     }
                     // unread code hrer
                     try {
-                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+                        let unreadMessageSelectionContent = await sequelize.query(`SELECT * FROM chat_unread_messages WHERE user_id = ${parseInt(multiMediaMessageInfo.user_id)} AND channel_id = ${parseInt(channelInfo.channel_id)} `, { type: sequelize.QueryTypes.SELECT });
                         // console.log("unreadMessageSelectionContent", unreadMessageSelectionContent)
                         if (unreadMessageSelectionContent.length) {
                             // unread exist
                             // update the unread 
                             try {
-                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                                let unreadMessageUpdationContent = await sequelize.query(`UPDATE chat_unread_messages SET message_id = ${parseInt(multiMediaMessageInfo.message_id)}, updated_at = "${getUTCDate()}" WHERE unread_id = ${parseInt(unreadMessageSelectionContent[0].unread_id)} `, { type: sequelize.QueryTypes.UPDATE });
                             } catch (err) {
                                 console.log("Updation Error", err);
                             }
                         } else {
                             // unread not exist
                             try {
-                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id,user_id,channel_id,unread_status,created_at,updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)},${parseInt(multiMediaMessageInfo.user_id)},${parseInt(channelInfo.channel_id)},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
+                                let unreadMessaageInsertedContent = await sequelize.query(`INSERT INTO chat_unread_messages(message_id, user_id, channel_id, unread_status, created_at, updated_at) VALUES(${parseInt(multiMediaMessageInfo.message_id)}, ${parseInt(multiMediaMessageInfo.user_id)}, ${parseInt(channelInfo.channel_id)}, ${parseInt('1')}, "${getUTCDate()}", "${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT })
                             } catch (err) {
                                 console.log("Insertation Error", err);
                             }
@@ -1287,8 +1420,6 @@ io.on('connection', async function (socket) {
             }
         }
     })
-
-
 
     socket.on('user channel status', async function (data) {
         console.log('user_channel is called by ', socket.id);
@@ -1375,8 +1506,6 @@ io.on('connection', async function (socket) {
         }));
     })
 
-
-
     socket.on('user status', async function (data) {
         console.log('user status is called by ', socket.id);
         let messageInfo;
@@ -1454,9 +1583,6 @@ io.on('connection', async function (socket) {
         }
     })
 
-
-    
-
     socket.on('delete message', async function (data) {
         console.log('delete message is called by ', socket.id);
         let messageInfo;
@@ -1489,7 +1615,7 @@ io.on('connection', async function (socket) {
             }
         }
         try {
-            let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+            let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
             messageInfo = messageContent[0];
         } catch (err) {
             console.log("this is error ", err);
@@ -1501,7 +1627,7 @@ io.on('connection', async function (socket) {
                 console.log("Database Updation Error", err);
             }
             try {
-                let updatedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                let updatedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                 updatedMessageInfo = updatedMessageContent[0];
             } catch (err) {
                 console.log("Database Selection Error", err);
@@ -1538,13 +1664,66 @@ io.on('connection', async function (socket) {
         })
     })
 
-    socket.on('disconnect', function (reason) {
+    socket.on('disconnect', async function (reason) {
+        let userSocketInfo;
+        try {
+            let userSocketContent = await sequelize.query(`SELECT * FROM chat_user_channel_status WHERE socket_id = "${socket.id}"`, { type: sequelize.QueryTypes.SELECT });
+            console.log("userSocketContent", userSocketContent);
+            if (userSocketContent.length) {
+                userSocketInfo = userSocketContent[0];
+            }
+        } catch (err) {
+            console.log("Selection Error", err);
+        }
+
+        let channelSocketUsersContent;
+        let channelContent;
+
+        if (userSocketInfo) {
+            try {
+                let userSocketUpdateContent = await sequelize.query(`UPDATE chat_user_channel_status SET user_channel_status = ${parseInt('0')}, updated_at = "${getUTCDate()}" WHERE socket_id = "${socket.id}" `, { type: sequelize.QueryTypes.UPDATE })
+            } catch (err) {
+                console.log("Updation Error", err);
+            }
+            try {
+                channelSocketUsersContent = await sequelize.query(`SELECT user_id,user_channel_status FROM chat_user_channel_status WHERE channel_id = ${parseInt(userSocketInfo.channel_id)}`, { type: sequelize.QueryTypes.SELECT });
+            } catch (err) {
+                console.log("Selection Error", err);
+            }
+            try {
+                let channelContentList = await sequelize.query(`SELECT * FROM chat_channels WHERE channel_id = ${parseInt(userSocketInfo.channel_id)}`, { type: sequelize.QueryTypes.SELECT })
+                console.log('this is channel content', channelContentList);
+                channelContent = channelContentList[0];
+                // channelContent = await channelsService.findChannel({ channel_name: messageInfo.channel_name })
+            } catch (err) {
+                console.log('this is error from channelContent', err);
+            }
+        }
+        if (channelSocketUsersContent) {
+            // io.in(userSocketInfo.channel_id).emit('channel status', JSON.stringify({
+            //     channel_name: channelContent.channel_name.toString(),
+            //     channel_users: channelSocketUsersContent
+            // }))
+
+            io.in(userSocketInfo.channel_id).emit('channel status', JSON.stringify({
+                channel_name: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, channelContent.channel_name.toString()),
+                channel_users: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(channelSocketUsersContent))
+            }))
+        } else {
+            // io.in(userSocketInfo.channel_id).emit('channel status', JSON.stringify({
+            //     channel_name: channelContent.channel_name.toString(),
+            //     channel_users: []
+            // }))
+        }
+
+
+
         console.log('disconnected user', socket.id);
         console.log('a user disconnected', reason);
     });
 
     socket.on('error', function (error) {
-        console.log(`this is error in socket, ${socket.id}, ${error}`);
+        console.log(`this is error in socket, ${socket.id}, ${error} `);
     })
 
 })
