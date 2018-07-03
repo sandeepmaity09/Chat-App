@@ -347,7 +347,7 @@ io.on('connection', async function (socket) {
 
         io.in(parseInt(channelContent.channel_id)).emit('channel status', JSON.stringify({
             channel_name: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, channelContent.channel_name.toString()),
-            channel_users: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(channelUsersList))
+            channel_users: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify({ "data": channelUsersList }))
         }))
     })
 
@@ -447,7 +447,7 @@ io.on('connection', async function (socket) {
 
         io.in(parseInt(channelContent.channel_id)).emit('channel status', JSON.stringify({
             channel_name: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, channelContent.channel_name.toString()),
-            channel_users: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(channelUsersList))
+            channel_users: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify({ "data": channelUsersList }))
         }))
 
         // let selectedUserChannelContent;
@@ -1707,7 +1707,7 @@ io.on('connection', async function (socket) {
 
             io.in(userSocketInfo.channel_id).emit('channel status', JSON.stringify({
                 channel_name: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, channelContent.channel_name.toString()),
-                channel_users: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(channelSocketUsersContent))
+                channel_users: Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify({ "data": channelSocketUsersContent }))
             }))
         } else {
             // io.in(userSocketInfo.channel_id).emit('channel status', JSON.stringify({
