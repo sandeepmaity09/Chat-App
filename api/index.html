@@ -63,6 +63,12 @@
         <button>User Channel Status</button>
     </form>
 
+    <form id="likemessage" action="">
+        <input id="likemsgid" placeholder="Like Message Id " autocomplete="off" />
+        <input id="likestatus" placeholder="for like 1 for unlike 0" autocomplete="off" />
+        <button>Like Message</button>
+    </form>
+
     <!-- <script src="/public/bundle.js"></script> -->
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
@@ -87,6 +93,35 @@
             let socket = io(HOST, {
                 transports: ['websocket']
             });
+
+
+            $('#likemessage').submit(async function (e) {
+                e.preventDefault();
+                console.log("like messaged called");
+                let message = {};
+                message.user_id = channel.user_id;
+                message.message_id = "" + $("#likemsgid").val();
+                message.channel_name = channel.channel_name;
+                // message.is_like = "g4k0rKoVz1LmydZop41s0w==:SD9m8QJxnL5jwgd+EDTUBg=="; // like  = 1
+                // message.is_like = "VYQm5GY2NHevmm+S1/HHcw==:inM0k/PJkaDzr6b84JM04A=="; // dislike = 0
+                let formData1 = new FormData();
+                formData1.append('name', message.message_id);
+                message.message_id = await fetch(FETCH_URL_ENCRYPT, {
+                    method: 'POST',
+                    body: formData1
+                }).then(res => res.json())
+                // message.message_id = message.message_id;
+
+                message.is_like = "" + $("#likestatus").val();
+                let formData2 = new FormData();
+                formData2.append("name", message.is_like);
+                message.is_like = await fetch(FETCH_URL_ENCRYPT, {
+                    method: 'POST',
+                    body: formData2
+                }).then(res => res.json())
+                console.log("this is like message", message);
+                socket.emit("like message", JSON.stringify(message));
+            })
 
             $('#userchannelstatus').submit(async function (er) {
                 er.preventDefault();

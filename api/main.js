@@ -1722,6 +1722,100 @@ io.on('connection', async function (socket) {
         console.log('a user disconnected', reason);
     });
 
+    socket.on('like message', async function (data) {
+        console.log("like message is called by socket id", socket.id);
+
+        let messageInfo;
+        try {
+            messageInfo = JSON.parse(data);
+        } catch (err) {
+            console.log("Parsing Error", err);
+        }
+        console.log("this is message info", messageInfo);
+        try {
+            _.forEach(messageInfo, (value, key) => {
+                console.log("Message keys", key);
+                messageInfo[key] = Encryptor.aesDecryption(process.env.ENCRYPT_KEY, messageInfo[key]);
+            })
+        } catch (err) {
+            console.log("Decryption Error", err);
+        }
+
+        console.log('this is messageInfo after parsing', messageInfo);
+
+        let channelName = messageInfo.channel_name;
+
+        let channelInfo;
+        try {
+            channelInfo = await channelsService.findChannel({ channel_name: channelName })
+        } catch (err) {
+            console.log("Channel Fetching Error", err);
+        }
+
+        console.log('this is channel Info', channelInfo);
+        let payloadLikeMessageObject;
+        try {
+            let likeMessageContent = await sequelize.query(`SELECT * FROM chat_liked_messages WHERE user_id = ${parseInt(messageInfo.user_id)} AND message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+            console.log("this is likeMessageContent", likeMessageContent);
+            if (!likeMessageContent.length) {
+                // new entry
+                if (parseInt(messageInfo.is_like)) {
+                    try {
+                        let insertedLikeMessageContent = await sequelize.query(`INSERT INTO chat_liked_messages(message_id,user_id,channel_id,like_status,likedmessage_status,created_at,updated_at) VALUES (${parseInt(messageInfo.message_id)},${parseInt(messageInfo.user_id)},${channelInfo.channel_id},${parseInt('1')},${parseInt('1')},"${getUTCDate()}","${getUTCDate()}")`, { type: sequelize.QueryTypes.INSERT });
+                    } catch (err) {
+                        console.log("Inserted Liked Message Content", err);
+                    }
+                }
+            } else {
+                // update the existing
+                if (parseInt(messageInfo.is_like)) {
+                    try {
+                        let likeUpdatedMessageContent = await sequelize.query(`UPDATE chat_liked_messages SET like_status = ${parseInt('1')}, updated_at = "${getUTCDate()}" WHERE user_id = ${parseInt(messageInfo.user_id)} AND message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                    } catch (err) {
+                        console.log("Like Updation Error", err);
+                    }
+                } else {
+                    try {
+                        let unlikeUpdatedMessageContent = await sequelize.query(`UPDATE chat_liked_messages SET like_status = ${parseInt('0')}, updated_at = "${getUTCDate()}" WHERE user_id = ${parseInt(messageInfo.user_id)} AND message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                    } catch (err) {
+                        console.log("Unlike Updation Error", err);
+                    }
+                }
+            }
+            try {
+                let likedMessageInfo;
+                let likedMessageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.SELECT });
+                likedMessageInfo = likedMessageContent[0];
+                let likedMessageDetails = await sequelize.query(`SELECT * FROM chat_liked_messages WHERE message_id = ${parseInt(messageInfo.message_id)} AND like_status = 1`, { type: sequelize.QueryTypes.SELECT });
+                let replyMessageDetails;
+                if (parseInt(likedMessageInfo.parent_id)) {
+                    replyMessageDetails = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(likedMessageInfo.parent_id)}`, { type: sequelize.QueryTypes.SELECT });
+                    likedMessageInfo.replyList = replyMessageDetails[0];
+                } else {
+                    replyMessageDetails = [];
+                    likedMessageInfo.replyList = replyMessageDetails;
+                }
+                likedMessageInfo.likesList = {
+                    "likes": likedMessageDetails
+                }
+                _.forEach(likedMessageInfo, (value, key) => {
+                    if (typeof likedMessageInfo[key] === 'object') {
+                        likedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(likedMessageInfo[key]));
+                    } else {
+                        likedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, likedMessageInfo[key].toString());
+                    }
+                })
+                payloadLikeMessageObject = likedMessageInfo;
+                console.log("Final Payload Like", likedMessageInfo);
+            } catch (err) {
+                console.log("Final Selection Error", err);
+            }
+        } catch (err) {
+            console.log("DB Error", err);
+        }
+        io.in(parseInt(channelInfo.channel_id)).emit('like', JSON.stringify(payloadLikeMessageObject));
+    })
+
     socket.on('error', function (error) {
         console.log(`this is error in socket, ${socket.id}, ${error} `);
     })
