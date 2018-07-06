@@ -43,6 +43,7 @@ async function getNoticiationAndroidUsers(channelId) {
                     console.log("channelUsersContent", channelUsersContent);
                     let channelUsersIdList = _.map(channelUsersContent, (item) => item.user_id);
                     console.log("channelUsersIdList", channelUsersIdList);
+                    
                     channelUsersStatusContent = await userChannelStatusService.findUsersStatusByChannelIdAndListWithDevice(parseInt(channelId), channelUsersIdList);
                     console.log('this is channelUsersStatusContent', channelUsersStatusContent);
                     usersDeviceContent = await userAuthService.getUserAuthByUserList(channelUsersIdList);

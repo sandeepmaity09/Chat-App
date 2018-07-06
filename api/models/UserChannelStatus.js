@@ -16,6 +16,9 @@ const UserChannelStatus = sequlize.define('UserChannelStatus', {
     channel_id: {
         type: Sequlize.INTEGER(11)
     },
+    socket_id: {
+        type: Sequlize.STRING
+    },
     user_channel_status: {
         type: Sequlize.INTEGER(2)
     },

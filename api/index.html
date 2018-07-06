@@ -69,6 +69,12 @@
         <button>Like Message</button>
     </form>
 
+    <form id="forwardmessage" action="">
+        <!-- <input id="forwardmsgid" placeholder="Forward Message Id" autocomplete="off" /> -->
+        <!-- <input id="channelnameid" placeholder="Forward Channel Id" autocomplete="off" /> -->
+        <button>Forward Message</button>
+    </form>
+
     <!-- <script src="/public/bundle.js"></script> -->
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
@@ -93,6 +99,17 @@
             let socket = io(HOST, {
                 transports: ['websocket']
             });
+
+
+            $("#forwardmessage").submit(async function (e) {
+                e.preventDefault();
+                console.log("forward message called");
+                let payload = {};
+                payload.message_ids = [149];
+                payload.user_id = 80;
+                payload.channel_names = ["25", "20", "26_49"];
+                socket.emit("forward message", JSON.stringify(payload))
+            })
 
 
             $('#likemessage').submit(async function (e) {
