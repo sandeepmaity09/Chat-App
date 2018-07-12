@@ -16,6 +16,10 @@ const MessageService = () => {
         return Message.findAll({ where: { channel_id: channelId }, raw: true })
     }
 
+    const getMessageByIdJoinWithUsername = (channelId) => {
+        return sequlize.query(`SELECT message_id,chat_messages.user_id,user_name,message_type,message,filelink,chat_messages.created_at,chat_messages.updated_at FROM chat_messages LEFT JOIN users ON chat_messages.user_id = users.user_id WHERE channel_id = ${channelId} AND message_status = 1 ORDER BY 'message_id'  DESC`, { type: sequlize.QueryTypes.SELECT });
+    }
+
     const getPaginatedReadMessagesByChannelIdMessageId = (channelId, messageId) => {
         return sequlize.query(`SELECT * FROM chat_messages WHERE channel_id = ${parseInt(channelId)} AND message_id <= ${parseInt(messageId)} LIMIT 50`, { type: sequlize.QueryTypes.SELECT });
     }
@@ -35,6 +39,7 @@ const MessageService = () => {
         getMessageById,
         saveMessage,
         getMessagesByChannelId,
+        getMessageByIdJoinWithUsername,
         createMultimediaMessage,
         getPaginatedReadMessagesByChannelIdMessageId,
         getPaginatedUnreadMessagesByChannelIdMessageId,

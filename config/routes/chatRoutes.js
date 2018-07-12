@@ -24,6 +24,8 @@ ChatRoutes.post('/updateLastMessage', formDataParser.array(), authKeyValidator, 
 ChatRoutes.post('/updateUserChannelStatus', formDataParser.array(), authKeyValidator, tokenValidator, ChatController.setUserChannelStatus);
 ChatRoutes.post('/updateUserStatus', formDataParser.array(), authKeyValidator, tokenValidator, ChatController.setUserStatus);
 
+ChatRoutes.post('/printProtocol', formDataParser.array(), ChatController.printProtocol);
+
 ChatRoutes.post('/encrypt', formDataParser.array(), ChatController.aesEncryptor);
 ChatRoutes.post('/decrypt', formDataParser.array(), ChatController.aesDecryptor);
 
