@@ -1756,6 +1756,15 @@ io.on('connection', async function (socket) {
                     let multiMediaMessageInfo;
                     let replyMessageInfo;
 
+                    // editing code 
+                    if (messageInfo.is_edited) {
+                        try {
+                            let messageContent = await sequelize.query(`UPDATE chat_messages SET message = "${messageInfo.message}",is_edited = ${parseInt(messageInfo.is_edited)},updated_at = "${getUTCDate()}" WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                        } catch (err) {
+                            console.log("Updation Error", err);
+                        }
+                    }
+
                     try {
                         let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
@@ -1823,6 +1832,16 @@ io.on('connection', async function (socket) {
                     console.log('Image Message');
                     console.log(messageInfo);
                     let multiMediaMessageInfo;
+
+                    // editing code 
+                    if (messageInfo.is_edited) {
+                        try {
+                            let messageContent = await sequelize.query(`UPDATE chat_messages SET message = "${messageInfo.message}",is_edited = ${parseInt(messageInfo.is_edited)},updated_at = "${getUTCDate()}" WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                        } catch (err) {
+                            console.log("Updation Error", err);
+                        }
+                    }
+
                     try {
                         let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
@@ -1889,6 +1908,15 @@ io.on('connection', async function (socket) {
                     let multiMediaMessageInfo;
                     let replyMessageInfo;
 
+                    // editing code 
+                    if (messageInfo.is_edited) {
+                        try {
+                            let messageContent = await sequelize.query(`UPDATE chat_messages SET message = "${messageInfo.message}",is_edited = ${parseInt(messageInfo.is_edited)},updated_at = "${getUTCDate()}" WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                        } catch (err) {
+                            console.log("Updation Error", err);
+                        }
+                    }
+
                     try {
                         let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
@@ -1957,6 +1985,17 @@ io.on('connection', async function (socket) {
                     console.log('Image Message');
                     console.log(messageInfo);
                     let multiMediaMessageInfo;
+
+
+                    // editing code 
+                    if (messageInfo.is_edited) {
+                        try {
+                            let messageContent = await sequelize.query(`UPDATE chat_messages SET message = "${messageInfo.message}",is_edited = ${parseInt(messageInfo.is_edited)},updated_at = "${getUTCDate()}" WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                        } catch (err) {
+                            console.log("Updation Error", err);
+                        }
+                    }
+
                     try {
                         let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
@@ -2018,10 +2057,22 @@ io.on('connection', async function (socket) {
             } else if (messageType === CONSTANTS.MSG_TYPE_VIDEO) {
                 console.log("Video Message");
                 let isReply = parseInt(messageInfo.parent_id);
+
+
                 if (isReply) {
                     console.log('Image Reply Message');
                     let multiMediaMessageInfo;
                     let replyMessageInfo;
+
+                    // editing code 
+                    if (messageInfo.is_edited) {
+                        try {
+                            let messageContent = await sequelize.query(`UPDATE chat_messages SET message = "${messageInfo.message}",is_edited = ${parseInt(messageInfo.is_edited)},updated_at = "${getUTCDate()}" WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                        } catch (err) {
+                            console.log("Updation Error", err);
+                        }
+                    }
+
 
                     try {
                         let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
@@ -2091,6 +2142,18 @@ io.on('connection', async function (socket) {
                     console.log('Image Message');
                     console.log(messageInfo);
                     let multiMediaMessageInfo;
+
+
+                    // editing code 
+                    if (messageInfo.is_edited) {
+                        try {
+                            let messageContent = await sequelize.query(`UPDATE chat_messages SET message = "${messageInfo.message}",is_edited = ${parseInt(messageInfo.is_edited)},updated_at = "${getUTCDate()}" WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                        } catch (err) {
+                            console.log("Updation Error", err);
+                        }
+                    }
+
+
                     try {
                         let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
@@ -2155,6 +2218,20 @@ io.on('connection', async function (socket) {
                     console.log('Image Reply Message');
                     let multiMediaMessageInfo;
                     let replyMessageInfo;
+
+
+
+                    // editing code 
+                    if (messageInfo.is_edited) {
+                        try {
+                            let messageContent = await sequelize.query(`UPDATE chat_messages SET message = "${messageInfo.message}",is_edited = ${parseInt(messageInfo.is_edited)},updated_at = "${getUTCDate()}" WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                        } catch (err) {
+                            console.log("Updation Error", err);
+                        }
+                    }
+
+
+
                     try {
                         let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
@@ -2216,6 +2293,19 @@ io.on('connection', async function (socket) {
                     console.log('Image Message');
                     console.log(messageInfo);
                     let multiMediaMessageInfo;
+
+
+                    // editing code 
+                    if (messageInfo.is_edited) {
+                        try {
+                            let messageContent = await sequelize.query(`UPDATE chat_messages SET message = "${messageInfo.message}",is_edited = ${parseInt(messageInfo.is_edited)},updated_at = "${getUTCDate()}" WHERE message_id = ${parseInt(messageInfo.message_id)}`, { type: sequelize.QueryTypes.UPDATE });
+                        } catch (err) {
+                            console.log("Updation Error", err);
+                        }
+                    }
+
+
+                    
                     try {
                         let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];

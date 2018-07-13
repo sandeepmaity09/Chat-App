@@ -837,13 +837,19 @@ const ChatController = () => {
         let channelName = req.body.channel_name;
         let startDate = req.body.start_date;
         let endDate = req.body.end_date;
+        let printOption = req.body.print_option;
 
         if (!channelName) {
             return res.json(new responseObj('channel_name not provided, BAD REQUEST', 400, false));
         }
 
+        if (!printOption) {
+            return res.json(new responseObj('print_option not provided, BAD REQUEST', 400, false));
+        }
+
         // try {
         //     channelName = Encrypter.aesDecryption(key, channelName);
+        //     printOption = Encrypter.aesDecryption(key, printOption);
         //     if (startDate) {
         //         startDate = Encrypter.aesDecryption(key, startDate);
         //     }
@@ -871,52 +877,54 @@ const ChatController = () => {
             try {
                 // complete data fetching
                 let content = `
-                    <style>
-                        table {
-                            font-family: arial, sans-serif;
-                            border-collapse: collapse;
-                            width: 90%;
-                            table-layout:fixed;
-                        }
-                        
-                        td, th {
-                            border:none;
-                            text-align: left;
-                            padding: 3px;
-                            word-wrap:break-word;
-                        }
-                        
-                        tr:nth-child(even) {
-                            background-color: #dddddd;
-                        }
-                    </style>
+                    <html>
+                        <head>
+                            <style>
+                                table {
+                                    font-family: arial, sans-serif;
+                                    border-collapse: collapse;
+                                    width: 90%;
+                                    table-layout:fixed;
+                                }
+                                
+                                td, th {
+                                    border:none;
+                                    text-align: left;
+                                    padding: 3px;
+                                    word-wrap:break-word;
+                                }
+                                
+                                tr:nth-child(even) {
+                                    background-color: #dddddd;
+                                }
+                            </style>
+                        </head>
 
-                    <h1 align="center">TTalk {{teamname}}</h1>
-                    <hr>
+                        <body>
+                            <h1 align="center">TTalk {{teamname}}</h1>
+                            <hr>
+                            <table align="center">
 
-                    
-
-                    <table align="center">
-                        {{#each messages}}
-                            {{#ifForHeading @index}}
-                            {{body}}
-                            {{/ifForHeading}}
-
-                            <tr>
-                                <td>{{inc @index}}</td>
-                                <td>{{this.user_name}}</td>
-                                <td>
-                                    {{#ifCond this.message_type this.message}}
-                                    {{body}}
-                                    {{/ifCond}}
-                                </td>
-                                <td>{{this.updated_at}}</td>
-                            </tr>
-                        {{/each}}
-                    </table>
-
-
-                    
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Message</th>
+                                    <th>Date</th>
+                                </tr>
+                                
+                                {{#each messages}}
+                                    <tr>
+                                        <td>{{this.user_name}}</td>
+                                        <td>
+                                            {{#ifCond this.message_type this.message}}
+                                            {{body}}
+                                            {{/ifCond}}
+                                        </td>
+                                        <td>{{this.updated_at}}</td>
+                                    </tr>
+                                {{/each}}
+                            </table>
+                        </body>
+                    </html>
                 `;
 
                 let messagesListContent = await messagesService.getMessageByIdJoinWithUsername(parseInt(channelInfo.channel_id));
@@ -967,7 +975,7 @@ const ChatController = () => {
                             }
                         })
                         `,
-                        recipe: 'chrome-pdf'
+                        recipe: 'phantom-pdf'
                     }, data: data
                 }).then((resp) => {
                     fs.writeFileSync('report.pdf', resp.content);
@@ -978,26 +986,16 @@ const ChatController = () => {
         }
     }
 
-    // <table align="center">
-    //                     <tr>
-    //                         <th>S.No</th>
-    //                         <th>Name</th>
-    //                         <th>Message</th>
-    //                         <th>Date / Time</th>
-    //                     </tr>
-    //                     {{#each messages}}
-    //                     <tr>   
-    //                         <td> {{inc @index}}</td>
-    //                         <td>{{this.user_name}}</td>
-    //                         <td>
-    //                         {{#ifCond this.message_type this.message}}
-    //                         {{body}}
-    //                         {{/ifCond}}
-    //                         </td>
-    //                         <td>{{this.updated_at}}</td>
-    //                     </tr>
-    //                     {{/each}}                        
-    //                 </table>
+
+    // ExTrA CoDe
+    // <td>{{inc @index}}</td>
+    //     <footer>
+    //     <div style='text-align:center'>{#pageNum}/{#numPages}</div>
+    // </footer>
+    // {{#ifForHeading @index}}
+    //                                 {{body}}
+    //                                 {{/ifForHeading}}
+
     return {
         createChannel,
         joinChannel,
