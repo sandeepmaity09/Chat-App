@@ -4,12 +4,12 @@ const asnc = require('async');
 const axios = require('axios');
 const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
-const jsreportrender = require('jsreport').render;
 const Handlebars = require('handlebars');
 
 const responseObj = require('../helpers/responseObj');
 const Encrypter = require('../helpers/aesHelpers');
 const getUTCTime = require('../helpers/dateHelpers');
+const pdfPrinter = require('../helpers/pdfCreator');
 
 const channelsService = require('../services/db/channels.service')();
 const channelUsersService = require('../services/db/channelUsers.service')();
@@ -470,7 +470,7 @@ const ChatController = () => {
                 let tempLog = await ffmpeg(path.join(__dirname + '../../../uploads/videos/' + filename))
                     .screenshots({
                         count: 1,
-                        timemarks: ['1'],
+                        timemarks: ['0'],
                         filename: filePrefix + '.jpg',
                         folder: path.join(__dirname + '../../../uploads/thumbs'),
                         size: '200x200'
@@ -867,122 +867,46 @@ const ChatController = () => {
             console.log("Channel Fetching Error", err);
         }
 
+        let messageListContent;
+
         if (startDate && endDate) {
             try {
                 // date wise data fetching
+                messageListContent = messagesService.getMessageByIdCreatedAtJoinWithUsername(parseInt(channelInfo.channel_id), startDate, endDate);
             } catch (err) {
 
             }
         } else {
             try {
-                // complete data fetching
-                let content = `
-                    <html>
-                        <head>
-                            <style>
-                                table {
-                                    font-family: arial, sans-serif;
-                                    border-collapse: collapse;
-                                    width: 90%;
-                                    table-layout:fixed;
-                                }
-                                
-                                td, th {
-                                    border:none;
-                                    text-align: left;
-                                    padding: 3px;
-                                    word-wrap:break-word;
-                                }
-                                
-                                tr:nth-child(even) {
-                                    background-color: #dddddd;
-                                }
-                            </style>
-                        </head>
-
-                        <body>
-                            <h1 align="center">TTalk {{teamname}}</h1>
-                            <hr>
-                            <table align="center">
-
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Message</th>
-                                    <th>Date</th>
-                                </tr>
-                                
-                                {{#each messages}}
-                                    <tr>
-                                        <td>{{this.user_name}}</td>
-                                        <td>
-                                            {{#ifCond this.message_type this.message}}
-                                            {{body}}
-                                            {{/ifCond}}
-                                        </td>
-                                        <td>{{this.updated_at}}</td>
-                                    </tr>
-                                {{/each}}
-                            </table>
-                        </body>
-                    </html>
-                `;
-
-                let messagesListContent = await messagesService.getMessageByIdJoinWithUsername(parseInt(channelInfo.channel_id));
+                messagesListContent = await messagesService.getMessageByIdJoinWithUsername(parseInt(channelInfo.channel_id));
                 // console.log("this is messagesData", messagesListContent);
                 // let messageObjectContent = Object.assign({}, messagesListContent);
                 // console.log("this is result", Object.assign({}, messagesListContent));
                 // for (message of messagesListContent) {
                 //     console.log(message);
                 // }
-
-                let data = {
-                    teamname: channelInfo.channel_name,
-                    messages: messagesListContent
-                }
-
-                await jsreportrender({
-                    template: {
-                        content: content,
-                        engine: 'handlebars',
-                        helpers: `
-                        Handlebars.registerHelper("inc", function (value, options) {
-                            return parseInt(value) + 1;
-                        });
-
-                        Handlebars.registerHelper("ifCond",function(value,message,options){
-                            if(parseInt(value)){
-                                if(parseInt(value) === 1){
-                                    return new Handlebars.SafeString('Image');
-                                }
-                                if(parseInt(value) === 2){
-                                    return new Handlebars.SafeString('Audio File');
-                                }
-                                if(parseInt(value) === 3){
-                                    return new Handlebars.SafeString('Video File');
-                                }
-                                if(parseInt(value) === 4){
-                                    return new Handlebars.SafeString('Document');
-                                }
-                            } else {
-                                return new Handlebars.SafeString(message);
-                            }
-                        })
-
-                        Handlebars.registerHelper("ifForHeading",function(value,options){
-                            let count = parseInt(value);
-                            if((count%25) === 0){
-                                return new Handlebars.SafeString('<tr><th>S.No</th><th>Name</th><th>Message</th><th>Date / Time</th></tr>');
-                            }
-                        })
-                        `,
-                        recipe: 'phantom-pdf'
-                    }, data: data
-                }).then((resp) => {
-                    fs.writeFileSync('report.pdf', resp.content);
-                })
             } catch (err) {
                 console.log("this is error", err);
             }
+        }
+
+        let data = {
+            teamname: channelInfo.channel_name,
+            messages: messagesListContent
+        }
+
+        let pdfReport = await pdfPrinter(data);
+        if (pdfReport === 'Success') {
+            /**
+             * 0 :- To Email
+             * 1 :- To Download
+             */
+            if (parseInt(printOption)) {
+                // Download
+            } else {
+                // Email
+            }
+
         }
     }
 
