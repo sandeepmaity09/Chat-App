@@ -17,6 +17,9 @@ const messagesService = require('../services/db/messages.service')();
 const userStatusService = require('../services/db/userStatus.service')();
 const unreadMessagesService = require('../services/db/unreadMessages.service')();
 const userChannelStatusService = require('../services/db/userChannelStatus.service')();
+const usersService = require('../services/db/users.service')();
+
+const emailService = require('../services/auth/email.service');
 
 let key = process.env.ENCRYPT_KEY;
 
@@ -834,10 +837,15 @@ const ChatController = () => {
      * For chat printing functionality
      */
     async function printProtocol(req, res) {
+        let userId = req.body.user_id;
         let channelName = req.body.channel_name;
         let startDate = req.body.start_date;
         let endDate = req.body.end_date;
         let printOption = req.body.print_option;
+
+        if (!userId) {
+            return res.json(new responseObj('user_id not provided, BAD REQUEST', 400, false));
+        }
 
         if (!channelName) {
             return res.json(new responseObj('channel_name not provided, BAD REQUEST', 400, false));
@@ -866,9 +874,7 @@ const ChatController = () => {
         } catch (err) {
             console.log("Channel Fetching Error", err);
         }
-
         let messageListContent;
-
         if (startDate && endDate) {
             try {
                 // date wise data fetching
@@ -879,12 +885,6 @@ const ChatController = () => {
         } else {
             try {
                 messagesListContent = await messagesService.getMessageByIdJoinWithUsername(parseInt(channelInfo.channel_id));
-                // console.log("this is messagesData", messagesListContent);
-                // let messageObjectContent = Object.assign({}, messagesListContent);
-                // console.log("this is result", Object.assign({}, messagesListContent));
-                // for (message of messagesListContent) {
-                //     console.log(message);
-                // }
             } catch (err) {
                 console.log("this is error", err);
             }
@@ -895,30 +895,38 @@ const ChatController = () => {
             messages: messagesListContent
         }
 
+        let userInfoObject;
+        try {
+            userInfoObject = await usersService.getUserByUserId(userId);
+        } catch (err) {
+            console.log("this is err", err);
+        }
+
         let pdfReport = await pdfPrinter(data);
-        if (pdfReport === 'Success') {
+        if (pdfReport.message === 'Success') {
             /**
              * 0 :- To Email
              * 1 :- To Download
              */
-            if (parseInt(printOption)) {
-                // Download
-            } else {
-                // Email
+            // console.log('this is pdf report', pdfReport);
+            try {
+                let emailStatus = await emailService.sendChatHistoryToEmail(userInfoObject.email, pdfReport.filename);
+                // console.log("this is emailStatus", emailStatus);
+                let temp = emailStatus.accepted;
+                // console.log('this is email status accepted', emailStatus.accepted);
+                // console.log("length of accepted email", temp.length);
+                if (parseInt(temp.length)) {
+                    // console.log("successfully sent");
+                    return res.json(new responseObj("Successfully sent to email ", 200, true))
+                } else {
+                    return res.json(new responseObj("Something went wrong try again later", 500, false));
+                    // console.log("not done");
+                }
+            } catch (err) {
+                console.log("this is error from email", err);
             }
-
         }
     }
-
-
-    // ExTrA CoDe
-    // <td>{{inc @index}}</td>
-    //     <footer>
-    //     <div style='text-align:center'>{#pageNum}/{#numPages}</div>
-    // </footer>
-    // {{#ifForHeading @index}}
-    //                                 {{body}}
-    //                                 {{/ifForHeading}}
 
     return {
         createChannel,

@@ -1,5 +1,7 @@
 const fs = require('fs');
 const jsreportrender = require('jsreport').render;
+const uuidv4 = require('uuid/v4');
+const path = require('path');
 
 async function pdfPrinter(data) {
     let content = `
@@ -90,11 +92,16 @@ async function pdfPrinter(data) {
             recipe: 'phantom-pdf'
         }, data: data
     }).then((resp) => {
+        let pathname = path.join(__dirname + "../../../uploads/reports/")
+        let filename = pathname + uuidv4() + '.pdf';
         return new Promise(function (resolve, reject) {
-            fs.writeFile('report.pdf', resp.content, function (err) {
+            fs.writeFile(filename, resp.content, function (err) {
                 if (err) reject(err);
-                console.log("Im completed");
-                resolve('Success');
+                // console.log("Im completed");
+                resolve({
+                    message: 'Success',
+                    filename: path.basename(filename)
+                });
             })
         });
     })
