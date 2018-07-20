@@ -97,7 +97,6 @@ async function pdfPrinter(data) {
         return new Promise(function (resolve, reject) {
             fs.writeFile(filename, resp.content, function (err) {
                 if (err) reject(err);
-                // console.log("Im completed");
                 resolve({
                     message: 'Success',
                     filename: path.basename(filename)
