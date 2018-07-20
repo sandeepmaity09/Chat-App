@@ -855,18 +855,19 @@ const ChatController = () => {
             return res.json(new responseObj('print_option not provided, BAD REQUEST', 400, false));
         }
 
-        // try {
-        //     channelName = Encrypter.aesDecryption(key, channelName);
-        //     printOption = Encrypter.aesDecryption(key, printOption);
-        //     if (startDate) {
-        //         startDate = Encrypter.aesDecryption(key, startDate);
-        //     }
-        //     if (endDate) {
-        //         endDate = Encrypter.aesDecryption(key, endDate);
-        //     }
-        // } catch (err) {
-        //     console.log("Decryption Error printProtocol", err);
-        // }
+        try {
+            channelName = Encrypter.aesDecryption(key, channelName);
+            printOption = Encrypter.aesDecryption(key, printOption);
+            userId = Encrypter.aesDecryption(key, userId);
+            if (startDate) {
+                startDate = Encrypter.aesDecryption(key, startDate);
+            }
+            if (endDate) {
+                endDate = Encrypter.aesDecryption(key, endDate);
+            }
+        } catch (err) {
+            console.log("Decryption Error printProtocol", err);
+        }
 
         let channelInfo;
         try {
