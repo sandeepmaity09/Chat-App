@@ -9,7 +9,7 @@ const UserAuthService = () => {
     }
 
     const getUserAuthByUserList = (userList) => {
-        return UserAuth.findAll({ attributes: ['user_id', 'device_type', 'device_token'], where: { user_id: userList }, raw: true })
+        return UserAuth.findAll({ attributes: ['user_id', 'device_type', 'push_token'], where: { user_id: userList }, raw: true })
     }
 
 

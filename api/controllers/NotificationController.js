@@ -1,31 +1,60 @@
 const gcm = require('node-gcm');
 const _ = require('underscore');
-const key = process.env.WEB_API_KEY_NOTIFICATION;
+const axios = require('axios');
+
+const key = process.env.ANDROID_GCM_KEY;
 const sender = new gcm.Sender(key);
 
 const userAuthService = require('../services/db/userAuth.service')();
 const channelUsersService = require('../services/db/channelUsers.service')();
 const userChannelStatusService = require('../services/db/userChannelStatus.service')();
 
-async function sendMessageNotification(userId, payload) {
-    let deviceTokenInfo;
-    let message;
-    let registrationTokens;
-    try {
-        let deviceTokenContent = await userAuthService.getUserAuth(userId);
-        console.log("deviceTokencontent", deviceTokenContent);
-        deviceTokenInfo = deviceTokenContent[0];
-    } catch (err) {
-        console.log("DeviceTokenContent Error", err);
+const sequelize = require('../../config/database');
+
+// async function sendMessageNotification(userId, payload) {
+//     let deviceTokenInfo;
+//     let message;
+//     let registrationTokens;
+//     try {
+//         let deviceTokenContent = await userAuthService.getUserAuth(userId);
+//         console.log("deviceTokencontent", deviceTokenContent);
+//         deviceTokenInfo = deviceTokenContent[0];
+//     } catch (err) {
+//         console.log("DeviceTokenContent Error", err);
+//     }
+
+//     let message = gcm.Message(payload);
+//     registrationTokens.push(deviceTokenInfo.device_token);
+
+//     sender.send(message, { registrationTokens: registrationTokens }, 10, function (err, response) {
+//         if (err) console.error(err);
+//         else console.log(response);
+//     });
+// }
+
+async function sendAndroidNotification(payload, token) {
+    // console.log("this is payloadn and token", payload, token);
+    let message = new gcm.Message({
+        data: payload,
+        priority: 'high'
+    })
+    let regTokens = [];
+
+    if (typeof token === "string") {
+        // console.log("true");
+        // console.log("this is token", token);
+        regTokens.push(token);
+    } else {
+        // console.log("false");
+        regTokens = token;
     }
-
-    let message = gcm.Message(payload);
-    registrationTokens.push(deviceTokenInfo.device_token);
-
-    sender.send(message, { registrationTokens: registrationTokens }, 10, function (err, response) {
-        if (err) console.error(err);
-        else console.log(response);
-    });
+    console.log(message, regTokens);
+    sender.send(message, { registrationTokens: regTokens }, function (err, response) {
+        if (err)
+            console.log(err);
+        else
+            console.log(response);
+    })
 }
 
 async function getNoticiationAndroidUsers(channelId) {
@@ -40,14 +69,14 @@ async function getNoticiationAndroidUsers(channelId) {
                 // find all users in this channel and then check for each user's status
                 try {
                     let channelUsersContent = await channelUsersService.findChannelUsersOnly(parseInt(channelId));
-                    console.log("channelUsersContent", channelUsersContent);
+                    // console.log("channelUsersContent", channelUsersContent);
                     let channelUsersIdList = _.map(channelUsersContent, (item) => item.user_id);
-                    console.log("channelUsersIdList", channelUsersIdList);
-                    
+                    // console.log("channelUsersIdList", channelUsersIdList);
+
                     channelUsersStatusContent = await userChannelStatusService.findUsersStatusByChannelIdAndListWithDevice(parseInt(channelId), channelUsersIdList);
-                    console.log('this is channelUsersStatusContent', channelUsersStatusContent);
+                    // console.log('this is channelUsersStatusContent', channelUsersStatusContent);
                     usersDeviceContent = await userAuthService.getUserAuthByUserList(channelUsersIdList);
-                    console.log("this is usersDeviceContent", usersDeviceContent);
+                    // console.log("this is usersDeviceContent", usersDeviceContent);
                 } catch (err) {
                     console.log("Selection Error", err);
                 }
@@ -80,8 +109,40 @@ async function getNoticiationAndroidUsers(channelId) {
 
 }
 
+async function sendAndroidNotificationWhenUserOffline(channelId, message, senderId) {
+
+    // console.log("this is sendAndroidNotificationWhenUserOffline", channelId);
+    // console.log("this is for message", message);
+    message = JSON.parse(message);
+    senderId = parseInt(senderId);
+    let channelUsersList;
+    try {
+        channelUsersList = await sequelize.query(`SELECT user_id FROM chat_user_channel_status WHERE channel_id = ${parseInt(channelId)} AND user_channel_status = 0`, { type: sequelize.QueryTypes.SELECT });
+        // console.log("ChannelUsersContent", channelUsersList);
+        let channelUsersIdList = _.map(channelUsersList, (item) => item.user_id);
+        userDeviceContent = await userAuthService.getUserAuthByUserList(channelUsersIdList);
+        // console.log("Token Details", userDeviceContent);
+
+        let payload = {
+            "title": "INR",
+            "push_type": "Message",
+            "sender_id": senderId,
+            "message": JSON.stringify(message)
+        }
+        // console.log()
+        _.forEach(userDeviceContent, (value, key) => {
+            // console.log("this is value and key", value, key);
+            payload['receiver_id'] = value.user_id;
+            sendAndroidNotification(payload, value.push_token);
+        })
+    } catch (err) {
+        console.log("ChannelUsersContent Error", err);
+    }
+}
+
 
 module.exports = {
-    sendMessageNotification,
-    getNoticiationAndroidUsers
+    getNoticiationAndroidUsers,
+    sendAndroidNotification,
+    sendAndroidNotificationWhenUserOffline
 }

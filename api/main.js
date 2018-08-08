@@ -599,6 +599,16 @@ io.on('connection', async function (socket) {
 
 
                         updatedMessageInfo.replyList = replyMessageInfo;
+
+
+
+                        try {
+                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(updatedMessageInfo), messageInfo.user_id);
+                        } catch (err) {
+                            console.log("Notification Error", err);
+                        }
+
+
                         try {
                             _.forEach(updatedMessageInfo, (item, key) => {
                                 if (typeof updatedMessageInfo[key] === 'object') {
@@ -683,6 +693,13 @@ io.on('connection', async function (socket) {
                         }
 
                         insertedMessageInfo.replyList = replyMessageInfo;
+
+                        try {
+                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(insertedMessageInfo), messageInfo.user_id);
+                        } catch (err) {
+                            console.log("Notification Error", err);
+                        }
+
                         try {
                             _.forEach(insertedMessageInfo, (item, key) => {
                                 if (typeof insertedMessageInfo[key] === 'object') {
@@ -769,6 +786,13 @@ io.on('connection', async function (socket) {
                         delete updatedMessageInfo.channel_id;
                         updatedMessageInfo.channel_name = channelInfo.channel_name;
                         updatedMessageInfo.replyList = {};
+
+                        try {
+                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(updatedMessageInfo), messageInfo.user_id);
+                        } catch (err) {
+                            console.log("Notification Error", err);
+                        }
+
                         try {
                             _.forEach(updatedMessageInfo, (item, key) => {
                                 if (typeof updatedMessageInfo[key] === 'object') {
@@ -789,16 +813,6 @@ io.on('connection', async function (socket) {
 
 
                         // Notification Goes Here : Group Chat
-
-                        try {
-                            let NotifyUsersList = NotificationController.getNoticiationAndroidUsers(parseInt(channelInfo.channel_id));
-                            console.log(NotifyUsersList);
-                            _.forEach(NotifyUsersList, (item) => {
-                                NotificationController.sendMessageNotification(parseInt(item), updatedMessageInfo.message);
-                            })
-                        } catch (err) {
-                            console.log("Notification Error", err);
-                        }
                     } else {
                         let insertedMessageId;
                         let insertedMessageInfo;
@@ -849,6 +863,12 @@ io.on('connection', async function (socket) {
                         insertedMessageInfo.replyList = {};
 
                         try {
+                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(insertedMessageInfoI), messageInfo.user_id);
+                        } catch (err) {
+                            console.log("Notification Error", err);
+                        }
+
+                        try {
                             _.forEach(insertedMessageInfo, (item, key) => {
                                 if (typeof insertedMessageInfo[key] === 'object') {
                                     insertedMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(insertedMessageInfo[key]));
@@ -872,14 +892,7 @@ io.on('connection', async function (socket) {
 
 
 
-                        try {
-                            let NotifyUsersList = NotificationController.getNoticiationAndroidUsers(parseInt(channelInfo.channel_id));
-                            _.forEach(NotifyUsersList, (item) => {
-                                NotificationController.sendMessageNotification(parseInt(item), insertedMessageInfo.message);
-                            })
-                        } catch (err) {
-                            console.log("Notification Error", err);
-                        }
+
 
 
 
@@ -936,6 +949,13 @@ io.on('connection', async function (socket) {
                     delete multiMediaMessageInfo.channel_id;
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = replyMessageInfo;
+
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
+
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
@@ -996,6 +1016,12 @@ io.on('connection', async function (socket) {
                     delete multiMediaMessageInfo.channel_id;
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = {};
+
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
@@ -1071,6 +1097,12 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = replyMessageInfo;
 
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
+
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
                             multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
@@ -1130,6 +1162,11 @@ io.on('connection', async function (socket) {
                     delete multiMediaMessageInfo.channel_id;
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = {};
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
@@ -1205,6 +1242,12 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = replyMessageInfo;
 
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
+
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
                             multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
@@ -1255,6 +1298,12 @@ io.on('connection', async function (socket) {
                     delete multiMediaMessageInfo.channel_id;
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = {};
+
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
@@ -1315,6 +1364,13 @@ io.on('connection', async function (socket) {
                     delete multiMediaMessageInfo.channel_id;
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = replyMessageInfo;
+
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
+
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
                             multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
@@ -1369,6 +1425,12 @@ io.on('connection', async function (socket) {
                     delete multiMediaMessageInfo.channel_id;
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = {};
+
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
@@ -1461,6 +1523,13 @@ io.on('connection', async function (socket) {
 
 
                         updatedMessageInfo.replyList = replyMessageInfo;
+                        
+                        try {
+                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(updatedMessageInfo), messageInfo.user_id);
+                        } catch (err) {
+                            console.log("Notification Error", err);
+                        }
+                        
                         try {
                             _.forEach(updatedMessageInfo, (item, key) => {
                                 if (typeof updatedMessageInfo[key] === 'object') {
@@ -1545,6 +1614,13 @@ io.on('connection', async function (socket) {
                         }
 
                         insertedMessageInfo.replyList = replyMessageInfo;
+                        
+                        try {
+                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(insertedMessageInfo), messageInfo.user_id);
+                        } catch (err) {
+                            console.log("Notification Error", err);
+                        }
+                        
                         try {
                             _.forEach(insertedMessageInfo, (item, key) => {
                                 if (typeof insertedMessageInfo[key] === 'object') {
@@ -1631,6 +1707,13 @@ io.on('connection', async function (socket) {
                         delete updatedMessageInfo.channel_id;
                         updatedMessageInfo.channel_name = channelInfo.channel_name;
                         updatedMessageInfo.replyList = {};
+
+                        try {
+                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(updatedMessageInfo), messageInfo.user_id);
+                        } catch (err) {
+                            console.log("Notification Error", err);
+                        }
+
                         try {
                             _.forEach(updatedMessageInfo, (item, key) => {
                                 if (typeof updatedMessageInfo[key] === 'object') {
@@ -1652,15 +1735,7 @@ io.on('connection', async function (socket) {
 
                         // Notification Goes Here : Group Chat
 
-                        try {
-                            let NotifyUsersList = NotificationController.getNoticiationAndroidUsers(parseInt(channelInfo.channel_id));
-                            console.log(NotifyUsersList);
-                            _.forEach(NotifyUsersList, (item) => {
-                                NotificationController.sendMessageNotification(parseInt(item), updatedMessageInfo.message);
-                            })
-                        } catch (err) {
-                            console.log("Notification Error", err);
-                        }
+
                     } else {
                         let insertedMessageId;
                         let insertedMessageInfo;
@@ -1710,6 +1785,16 @@ io.on('connection', async function (socket) {
                         insertedMessageInfo.channel_name = channelInfo.channel_name;
                         insertedMessageInfo.replyList = {};
 
+
+                        // Notification Goes Here : Group Chat
+                        try {
+                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(insertedMessageInfo), messageInfo.user_id);
+                        } catch (err) {
+                            console.log("Notification Error", err);
+                        }
+
+
+                        // Encryption goes here
                         try {
                             _.forEach(insertedMessageInfo, (item, key) => {
                                 if (typeof insertedMessageInfo[key] === 'object') {
@@ -1729,19 +1814,10 @@ io.on('connection', async function (socket) {
                         })
 
 
-                        // Notification Goes Here : Group Chat
 
 
 
 
-                        try {
-                            let NotifyUsersList = NotificationController.getNoticiationAndroidUsers(parseInt(channelInfo.channel_id));
-                            _.forEach(NotifyUsersList, (item) => {
-                                NotificationController.sendMessageNotification(parseInt(item), insertedMessageInfo.message);
-                            })
-                        } catch (err) {
-                            console.log("Notification Error", err);
-                        }
 
 
 
@@ -1807,6 +1883,12 @@ io.on('connection', async function (socket) {
                     delete multiMediaMessageInfo.channel_id;
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = replyMessageInfo;
+
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
@@ -1877,6 +1959,12 @@ io.on('connection', async function (socket) {
                     delete multiMediaMessageInfo.channel_id;
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = {};
+
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
@@ -1961,6 +2049,12 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = replyMessageInfo;
 
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
+
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
                             multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
@@ -2031,6 +2125,12 @@ io.on('connection', async function (socket) {
                     delete multiMediaMessageInfo.channel_id;
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = {};
+
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
@@ -2118,6 +2218,12 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = replyMessageInfo;
 
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
+
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
                             multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
@@ -2189,6 +2295,12 @@ io.on('connection', async function (socket) {
                     delete multiMediaMessageInfo.channel_id;
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = {};
+
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
 
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
@@ -2271,6 +2383,14 @@ io.on('connection', async function (socket) {
                     delete multiMediaMessageInfo.channel_id;
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = replyMessageInfo;
+
+
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
+
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
                             multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
@@ -2305,7 +2425,7 @@ io.on('connection', async function (socket) {
                     }
 
 
-                    
+
                     try {
                         let messageContent = await sequelize.query(`SELECT * FROM chat_messages WHERE message_id = ${parseInt(messageInfo.message_id)} `, { type: sequelize.QueryTypes.SELECT });
                         multiMediaMessageInfo = messageContent[0];
@@ -2339,6 +2459,12 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = {};
 
+                    try {
+                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                    } catch (err) {
+                        console.log("Notification Error", err);
+                    }
+
                     _.forEach(multiMediaMessageInfo, (value, key) => {
                         if (typeof multiMediaMessageInfo[key] === 'object') {
                             multiMediaMessageInfo[key] = Encryptor.aesEncryption(process.env.ENCRYPT_KEY, JSON.stringify(multiMediaMessageInfo[key]));
@@ -2350,14 +2476,6 @@ io.on('connection', async function (socket) {
                     io.in(channelInfo.channel_id).emit('send', JSON.stringify({
                         message: multiMediaMessageInfo
                     }));
-
-
-                    // Notification Goes Here : Group Chat
-
-
-
-
-
                 }
             }
         }

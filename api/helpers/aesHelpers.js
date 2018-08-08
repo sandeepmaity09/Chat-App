@@ -114,28 +114,28 @@ const aesEncryption = function (key, data) {
     let encodedIV = new Buffer(iv).toString('base64');
     // console.log('this is endodedIV', encodedIV);
     let payload = crypted + ":" + encodedIV;
-    console.log("data after encoding", payload);
+    // console.log("data after encoding", payload);
     // payload = payload.replace(new RegExp('+', 'g'), '.');
     payload = payload.split('+').join('.');
     payload = payload.split('/').join('_');
     payload = payload.split('=').join('-');
     // payload = payload.replace(/'\/'/g, '_');
     // payload = payload.replace(/'='/g, '-');
-    console.log("data after replacing", payload);
+    // console.log("data after replacing", payload);
     return payload;
 }
 
 
 const aesDecryption = function (key, data) {
     key = fixString(key);
-    console.log("data getting", data);
+    // console.log("data getting", data);
     // data = data.replace(/./g, '+');
     // data = data.replace(/_/g, '/');
     // data = data.replace(/-/g, '=');
     data = data.split('.').join('+');
     data = data.split('_').join('/');
     data = data.split('-').join('=');
-    console.log("data after replacing", data);
+    // console.log("data after replacing", data);
     let temp = data.split(':');
     let encodedIV = temp[1];
     let encodedData = temp[0];
