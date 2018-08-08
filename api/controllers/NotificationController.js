@@ -109,16 +109,21 @@ async function getNoticiationAndroidUsers(channelId) {
 
 }
 
-async function sendAndroidNotificationWhenUserOffline(channelId, message, senderId) {
+async function sendAndroidNotificationWhenUserOffline(channelInfo, message, senderId) {
 
     // console.log("this is sendAndroidNotificationWhenUserOffline", channelId);
     // console.log("this is for message", message);
     message = JSON.parse(message);
+    channelInfo = JSON.parse(channelInfo);
     senderId = parseInt(senderId);
     let channelUsersList;
     try {
-        channelUsersList = await sequelize.query(`SELECT user_id FROM chat_user_channel_status WHERE channel_id = ${parseInt(channelId)} AND user_channel_status = 0`, { type: sequelize.QueryTypes.SELECT });
+        channelUsersList = await sequelize.query(`SELECT user_id FROM chat_user_channel_status WHERE channel_id = ${parseInt(channelInfo.channel_id)} AND user_channel_status = 0`, { type: sequelize.QueryTypes.SELECT });
+        senderName = await sequelize.query(`SELECT user_name from users WHERE user_id = ${senderId}`, { type: sequelize.QueryTypes.SELECT });
+        teamDetails = await sequelize.query(`SELECT team_id,team_name FROM teams where team_id = ${parseInt(channelInfo.channel_name)}`, { type: sequelize.QueryTypes.SELECT })
+        // console.log("team details", teamDetails);
         // console.log("ChannelUsersContent", channelUsersList);
+        // console.log("sender Name ", senderName[0]);
         let channelUsersIdList = _.map(channelUsersList, (item) => item.user_id);
         userDeviceContent = await userAuthService.getUserAuthByUserList(channelUsersIdList);
         // console.log("Token Details", userDeviceContent);
@@ -127,6 +132,9 @@ async function sendAndroidNotificationWhenUserOffline(channelId, message, sender
             "title": "INR",
             "push_type": "Message",
             "sender_id": senderId,
+            "team_id": teamDetails[0].team_id,
+            "team_name": teamDetails[0].team_name,
+            "sender_name": senderName[0].user_name,
             "message": JSON.stringify(message)
         }
         // console.log()

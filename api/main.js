@@ -603,7 +603,7 @@ io.on('connection', async function (socket) {
 
 
                         try {
-                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(updatedMessageInfo), messageInfo.user_id);
+                            NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(updatedMessageInfo), messageInfo.user_id);
                         } catch (err) {
                             console.log("Notification Error", err);
                         }
@@ -695,7 +695,7 @@ io.on('connection', async function (socket) {
                         insertedMessageInfo.replyList = replyMessageInfo;
 
                         try {
-                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(insertedMessageInfo), messageInfo.user_id);
+                            NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(insertedMessageInfo), messageInfo.user_id);
                         } catch (err) {
                             console.log("Notification Error", err);
                         }
@@ -788,7 +788,7 @@ io.on('connection', async function (socket) {
                         updatedMessageInfo.replyList = {};
 
                         try {
-                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(updatedMessageInfo), messageInfo.user_id);
+                            NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(updatedMessageInfo), messageInfo.user_id);
                         } catch (err) {
                             console.log("Notification Error", err);
                         }
@@ -863,7 +863,7 @@ io.on('connection', async function (socket) {
                         insertedMessageInfo.replyList = {};
 
                         try {
-                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(insertedMessageInfoI), messageInfo.user_id);
+                            NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(insertedMessageInfoI), messageInfo.user_id);
                         } catch (err) {
                             console.log("Notification Error", err);
                         }
@@ -951,7 +951,7 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = replyMessageInfo;
 
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
@@ -1018,7 +1018,7 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = {};
 
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
@@ -1098,7 +1098,7 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = replyMessageInfo;
 
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
@@ -1163,7 +1163,7 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.channel_name = channelInfo.channel_name;
                     multiMediaMessageInfo.replyList = {};
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
@@ -1243,7 +1243,7 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = replyMessageInfo;
 
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
@@ -1300,7 +1300,7 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = {};
 
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
@@ -1366,7 +1366,7 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = replyMessageInfo;
 
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
@@ -1427,7 +1427,7 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = {};
 
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
@@ -1525,7 +1525,7 @@ io.on('connection', async function (socket) {
                         updatedMessageInfo.replyList = replyMessageInfo;
                         
                         try {
-                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(updatedMessageInfo), messageInfo.user_id);
+                            NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(updatedMessageInfo), messageInfo.user_id);
                         } catch (err) {
                             console.log("Notification Error", err);
                         }
@@ -1616,7 +1616,7 @@ io.on('connection', async function (socket) {
                         insertedMessageInfo.replyList = replyMessageInfo;
                         
                         try {
-                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(insertedMessageInfo), messageInfo.user_id);
+                            NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(insertedMessageInfo), messageInfo.user_id);
                         } catch (err) {
                             console.log("Notification Error", err);
                         }
@@ -1709,7 +1709,7 @@ io.on('connection', async function (socket) {
                         updatedMessageInfo.replyList = {};
 
                         try {
-                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(updatedMessageInfo), messageInfo.user_id);
+                            NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(updatedMessageInfo), messageInfo.user_id);
                         } catch (err) {
                             console.log("Notification Error", err);
                         }
@@ -1788,7 +1788,7 @@ io.on('connection', async function (socket) {
 
                         // Notification Goes Here : Group Chat
                         try {
-                            NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(insertedMessageInfo), messageInfo.user_id);
+                            NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(insertedMessageInfo), messageInfo.user_id);
                         } catch (err) {
                             console.log("Notification Error", err);
                         }
@@ -1885,7 +1885,7 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = replyMessageInfo;
 
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
@@ -1961,7 +1961,7 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = {};
 
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
@@ -2050,7 +2050,7 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = replyMessageInfo;
 
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
@@ -2127,7 +2127,7 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = {};
 
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
@@ -2219,7 +2219,7 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = replyMessageInfo;
 
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
@@ -2297,7 +2297,7 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = {};
 
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
@@ -2386,7 +2386,7 @@ io.on('connection', async function (socket) {
 
 
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
@@ -2460,7 +2460,7 @@ io.on('connection', async function (socket) {
                     multiMediaMessageInfo.replyList = {};
 
                     try {
-                        NotificationController.sendAndroidNotificationWhenUserOffline(channelInfo.channel_id, JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
+                        NotificationController.sendAndroidNotificationWhenUserOffline(JSON.stringify(channelInfo), JSON.stringify(multiMediaMessageInfo), messageInfo.user_id);
                     } catch (err) {
                         console.log("Notification Error", err);
                     }
