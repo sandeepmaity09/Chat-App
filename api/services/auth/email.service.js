@@ -7,25 +7,17 @@ let transporter = nodemailer.createTransport({
     secure: true, // true for 465, false for other ports
     auth: {
         user: 'webtestmobile@gmail.com', // generated ethereal user
-        pass: 'Www!@#321' // generated ethereal password
+        pass: 'Mmm!@#321' // generated ethereal password
     }
 });
 
-
 function callbackSend(error, info) {
-    // return new Promise(function (resolve, reject) {
     if (error) {
         console.log("error", error)
-        // reject(error);
     } else {
         console.log("info", info);
-        // resolve({
-        //     message: 'Success'
-        // })
     }
-    // })
 }
-
 
 exports.sendChatHistoryToEmail = function (mailto, filename) {
     let mailOptions = {

@@ -925,6 +925,7 @@ const ChatController = () => {
                 }
             } catch (err) {
                 console.log("this is error from email", err);
+                return res.json(new responseObj("Somethig went wrong try again later", 500, false));
             }
         }
     }
